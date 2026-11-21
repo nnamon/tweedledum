@@ -41,6 +41,7 @@ test('lesson 1 can be typed through, and progress moves on', async ({ page }) =>
 
 test('progress code moves progress to a fresh browser', async ({ page, browser }) => {
   await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.getByRole('heading', { name: 'Lesson 1' })).toBeVisible();
   await typeText(page, 'aa ab ac ad ba bb bc bd ca cb cc cd da db dc dd aba aca ada bab bcb bdb cac cbc cdc dad dbd dcd acb cbd dab cab dba dac adc bad cda abcd baba acad bacd dacb caac dbcd bada dcab baca dada cada');
   await expect(page.getByRole('heading', { name: 'Lesson 1 finished' })).toBeVisible();
   await page.goto('./#/settings');
