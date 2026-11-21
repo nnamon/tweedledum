@@ -1,5 +1,9 @@
 # Version history
 
+## 0.1.1
+
+- Screens scroll again. In 0.1.0 nothing below the first screenful could be reached on a phone, or with a mouse wheel on a computer.
+
 ## 0.1.0
 
 The first version.

@@ -34,6 +34,11 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* The app fills the pinned body, so its panes, not the document, scroll. */
+#app {
+  height: 100%;
+}
+
 h1,
 h2,
 h3,
