@@ -2,23 +2,44 @@
 
 # Tweedledum
 
-A typing tutor for the [Twiddler](https://mytwiddler.com) one-handed chording keyboard. It runs in the browser, installs as an app (PWA) and works offline.
+Tweedledum is a typing tutor for the [Twiddler](https://mytwiddler.com), a one-handed chording keyboard. Open it at <https://nnamon.github.io/tweedledum/>. It runs in the browser, installs as an app (PWA) and works offline after the first visit. It teaches the 69 lessons of Tek Gear's Twiddler Typing Tutor and adds dictation, drills and statistics, which you can carry between devices without an account.
 
-**Open it:** <https://nnamon.github.io/tweedledum/>
+## Exercises
 
-## What it does
+The lessons start with 4 letters and end with sentences that use digits and punctuation. Finishing one moves you on to the next, and you can start any lesson from the Lessons tab. The tutor's other modes are here too:
 
-- **Lessons.** The 69 lessons of the Twiddler Typing Tutor (tutor.mytwiddler.com), from four letters to sentences with digits and punctuation. Finishing a lesson moves you to the next.
-- **The tutor's other modes.** Random text (group length, capitals, digits, punctuation), your own text, multi-character chords ("the ", "ing "...), and a key explorer that shows the chord of any key you press.
-- **Dictation.** Letters or words are read out and you type them without seeing them. Letters use recorded clips that work offline; words use your device voice.
-- **Drills.** Weak keys (built from your own statistics), timed tests, and chord reading (the keypad shows a chord; you type what it makes).
-- **A keypad picture** drawn from the layout in use, front or back view, mirrored for the left hand if you wear it there, with the next chord lit. Hints can show always, after a pause, after a miss, or never.
-- **Statistics** for this session, every past session, and all time: speed by day, accuracy, and per-character accuracy and timing.
-- **Your layout.** Load a Twiddler config file (version 4, 5 or 7, for the Twiddler 2, 3 and 4), a CSV from the Twiddler Tuner, or the tutor's JSON key map. TabSpace, MirrorWalk, DelEnt and TeaSan are built in.
+- Random text, with a group length you choose and optional capitals, digits and punctuation.
+- Your own text, pasted in.
+- Multi-character chords such as `the ` and `ing `.
+- A key explorer on the Chords tab that shows the chord of any key you press.
 
-## Progress without an account
+Tweedledum adds these:
 
-Everything is kept in your browser. To carry on somewhere else, open Settings and copy a **progress code** (one line of text starting `TWD1.`) or save a **progress file**, then load it in the other copy of the app. Nothing is sent to a server; the code is your settings, layout, runs and statistics, compressed.
+- Letter and word dictation. The app reads the text out and hides it, and you type what you hear. Letters are recorded clips that work offline; words use your device's speech voice.
+- Weak keys, a drill built from the characters you miss most and type slowest.
+- Timed tests on common words, from 30 s to 5 min.
+- Chord reading: the keypad shows a chord with its labels hidden, and you type the character it makes.
+
+During a run the keypad picture lights the next chord, drawn from the layout you're using. In Settings you can switch between the front and back views, mirror the picture if you wear the Twiddler on your left hand, and choose when hints show. The Settings button on the run screen pauses the run, so you can change these without losing your place. Stats shows this session, each past session and all time, with speed by day and the accuracy and timing of each character.
+
+## Layouts
+
+The default layout is the one the Twiddler 3 and 4 ship with, which is also the one the Typing Tutor teaches. To use another, open Settings and load one of these under Layout:
+
+- A Twiddler config file: version 4 (Twiddler 2), 5 (Twiddler 3) or 7 (Twiddler 4).
+- A CSV exported by the Twiddler Tuner.
+- The Typing Tutor's JSON key map.
+
+TabSpace, MirrorWalk, DelEnt and TeaSan are built in. Tweedledum keeps only the chords that type text, so shortcuts, mouse actions and chords with two buttons in one row are dropped. The lessons introduce letters in an order chosen for the default layout, and on another layout that order won't follow your chords.
+
+## Moving your progress
+
+Your progress lives in the browser's storage, and nothing is sent to a server. To carry on in another browser or on another device:
+
+1. In Settings, under Progress, press Copy progress code or Save progress file. The code is one line of text starting `TWD1.`, holding your settings, layout, runs and statistics.
+2. In the other copy of the app, paste the code under Load progress and press Load code, or press Load progress file.
+
+Loading replaces the progress in that browser, and the app asks before it does.
 
 ## Chord notation
 
@@ -26,7 +47,7 @@ Chords are written one letter per row, row 1 (index finger) first: `L`, `M` or `
 
 ## Development
 
-Everything runs in Docker; nothing is installed on the host.
+Everything runs in Docker, so you don't install node on the host. These commands install the dependencies, run the checks, start a dev server and run the end-to-end tests on desktop and phone browsers:
 
 ```sh
 docker compose run --rm -T dev npm install
@@ -37,7 +58,7 @@ docker compose run --rm --service-ports dev npm run dev   # http://localhost:737
 docker compose run --rm -T e2e npx playwright test        # end-to-end, desktop and phone
 ```
 
-Svelte 5, TypeScript and Vite, with vite-plugin-pwa. Pushing to `main` tests, builds and deploys to GitHub Pages (`.github/workflows/pages.yml`).
+The app is Svelte 5, TypeScript and Vite, with vite-plugin-pwa. A push to `main` runs the tests, builds the app and deploys it to GitHub Pages (`.github/workflows/pages.yml`). Read [AGENTS.md](AGENTS.md) before you change the code and [STYLE.md](STYLE.md) before you write docs, comments, commit messages or text in the app.
 
 ## Credits
 

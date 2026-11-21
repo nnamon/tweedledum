@@ -54,7 +54,7 @@
     <section class="section">
       <h2 class="section-head">Length</h2>
       <Segmented label="Length" bind:value={o.weak.length} options={[{ value: 40, label: 'Short' }, { value: 80, label: 'Medium' }, { value: 160, label: 'Long' }]} />
-      <p class="section-foot">The drill picks the letters you miss most and type slowest, from every run so far. With fewer than four letters practised, it uses a to h.</p>
+      <p class="section-foot">Until you've practised 4 letters, the drill uses a to h.</p>
     </section>
   {:else if kind === 'timed'}
     <section class="section">
@@ -97,7 +97,6 @@
       <section class="section">
         <h2 class="section-head">Questions</h2>
         <Segmented label="Questions" bind:value={o.quiz.count} options={[{ value: 10, label: '10' }, { value: 26, label: '26' }, { value: 50, label: '50' }]} />
-        <p class="section-foot">The keypad shows a chord with its labels hidden. Type the character it makes.</p>
       </section>
     {/if}
   {:else if kind === 'dictWords'}
@@ -112,7 +111,7 @@
       <p class="section-foot">Each word is read out. Type it, then a space. Press Tab to hear it again. A character shows after three misses on it.</p>
     </section>
     {#if !speechAvailable()}
-      <p class="notice bad">This browser has no speech voice, so words cannot be read out. Letter dictation still works: it uses recorded clips.</p>
+      <p class="notice bad">This browser has no speech voice, so it can't read words out. Letter dictation still works because it uses recorded clips.</p>
     {/if}
   {/if}
 

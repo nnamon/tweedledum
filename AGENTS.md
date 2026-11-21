@@ -1,7 +1,5 @@
 # Working on Tweedledum
 
-Rules for anyone changing this repo, people and coding agents alike.
-
 Tweedledum is a typing tutor for the Twiddler chording keyboard. Its users are learning chords, often from zero. The Tek Gear Typing Tutor (tutor.mytwiddler.com/tutor2) is the reference for lessons, the default layout and scoring; `scripts/tutor-levels.json` is its lesson list as served on 21 November 2026.
 
 ## Tooling
@@ -21,6 +19,7 @@ docker compose run --rm -T e2e npx playwright test
 - Every bug fix comes with a test that fails on the old code.
 - Run all the checks above before you commit. Say what you ran and what you did not.
 - Every push that changes the app bumps the version in `package.json` and adds an entry at the top of `CHANGELOG.md`, written for the person using the app.
+- Commit subjects start with the project and version when the version changes: `tweedledum 0.1.3: pause the run while Settings is open`.
 - Progress must stay portable: everything the app remembers lives in the `Profile` (`src/lib/state/profile.ts`) and travels in the progress code. Never add state that only lives elsewhere. A change to the profile shape must load older profiles (`normaliseProfile`).
 - Nothing is sent to a server.
 
@@ -31,9 +30,13 @@ docker compose run --rm -T e2e npx playwright test
 - Thumb buttons: N, A, C, S = NUM, ALT, CTRL, SHIFT = T1 to T4 on the Twiddler 4.
 - Config formats are described in `src/lib/chords/import.ts`. Test new formats against real files.
 
-## Writing for the screen
+## Writing
 
-Plain, whole sentences in British English. Say what to do and what happens. No em dashes, exclamation marks, rhetorical questions, slogans or encouragement ("Great job"). Numbers as digits; "wpm" in lower case. Error messages say what happened and what is left ("Nothing was changed."), never raw browser errors.
+[STYLE.md](STYLE.md) covers everything you write here: docs, comments, commit messages, the changelog and the text in the app. Text in the app also follows these rules:
+
+- British English. Numbers as digits, and "wpm" in lower case.
+- Say what to do and what happens. No encouragement ("Great job").
+- An error message says what happened and what was left alone ("Nothing was changed."), never a raw browser error.
 
 ## Visual design
 

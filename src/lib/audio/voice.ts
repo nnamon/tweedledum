@@ -96,7 +96,6 @@ function speak(text: string, o: VoiceOptions): Promise<void> {
   });
 }
 
-/** Says one character. */
 export async function sayChar(ch: string, o: VoiceOptions): Promise<void> {
   const name = clipFor(ch);
   // A capital: "capital" by the device voice, then the letter clip.

@@ -23,7 +23,7 @@
 
   const groups: { head: string; kinds: Exercise['kind'][]; foot?: string }[] = [
     { head: 'From the Twiddler Typing Tutor', kinds: ['lesson', 'random', 'custom', 'multi'] },
-    { head: 'Listening', kinds: ['dictLetters', 'dictWords'], foot: 'Dictation reads the text aloud instead of showing it. Letters use recorded clips; words use your device voice.' },
+    { head: 'Listening', kinds: ['dictLetters', 'dictWords'] },
     { head: 'Drills', kinds: ['weak', 'timed', 'quiz'] },
   ];
 
@@ -36,7 +36,7 @@
 <div class="screen">
   <h1 class="large-title">Practice</h1>
   {#if store.warning}<p class="notice warn">{store.warning}</p>{/if}
-  {#if store.saveFailed}<p class="notice bad">This browser would not save your progress. Copy a progress code from Settings before you close the page.</p>{/if}
+  {#if store.saveFailed}<p class="notice bad">This browser won't save your progress. Copy a progress code in Settings before you close the page.</p>{/if}
 
   <section class="section">
     <div class="group continue">

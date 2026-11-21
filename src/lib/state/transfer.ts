@@ -30,7 +30,6 @@ function canCompress(): boolean {
   return typeof CompressionStream !== 'undefined' && typeof DecompressionStream !== 'undefined';
 }
 
-/** The progress code for a profile. */
 export async function exportCode(p: Profile): Promise<string> {
   const bytes = new TextEncoder().encode(JSON.stringify(p));
   if (canCompress()) return COMPRESSED + toBase64Url(await pipe(bytes, new CompressionStream('deflate-raw')));

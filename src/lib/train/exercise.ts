@@ -50,15 +50,15 @@ export interface ExerciseInfo {
 }
 
 export const EXERCISES: Record<Exercise['kind'], ExerciseInfo> = {
-  lesson: { kind: 'lesson', title: 'Lessons', blurb: 'The 69 lessons of the Twiddler Typing Tutor, from four letters to full sentences.', icon: 'book', colour: 'blue', setup: false },
+  lesson: { kind: 'lesson', title: 'Lessons', blurb: 'The 69 lessons of the Twiddler Typing Tutor, from 4 letters to full sentences.', icon: 'book', colour: 'blue', setup: false },
   random: { kind: 'random', title: 'Random text', blurb: 'Groups of random characters. Choose the group length and add capitals, digits or punctuation.', icon: 'shuffle', colour: 'indigo', setup: true },
   custom: { kind: 'custom', title: 'Your own text', blurb: 'Paste any text and type it.', icon: 'text', colour: 'teal', setup: true },
   multi: { kind: 'multi', title: 'Multi-character chords', blurb: 'Words with a chord of their own, such as "the " and "ing ". The keypad shows the word chord.', icon: 'sparkles', colour: 'purple', setup: false },
   weak: { kind: 'weak', title: 'Weak keys', blurb: 'A drill on the characters you miss most or type slowest, from your own statistics.', icon: 'target', colour: 'red', setup: true },
-  timed: { kind: 'timed', title: 'Timed test', blurb: 'Common words for a fixed time. Measures your speed.', icon: 'timer', colour: 'orange', setup: true },
+  timed: { kind: 'timed', title: 'Timed test', blurb: 'Type common words until the time runs out.', icon: 'timer', colour: 'orange', setup: true },
   dictLetters: { kind: 'dictLetters', title: 'Letter dictation', blurb: 'Hear letters read out and type them without seeing them.', icon: 'ear', colour: 'green', setup: true },
   dictWords: { kind: 'dictWords', title: 'Word dictation', blurb: 'Hear words read out and type them without seeing them.', icon: 'waveform', colour: 'pink', setup: true },
-  quiz: { kind: 'quiz', title: 'Chord reading', blurb: 'The keypad shows a chord. Type what it types, to learn to read the chord pictures.', icon: 'grid', colour: 'grey', setup: true },
+  quiz: { kind: 'quiz', title: 'Chord reading', blurb: 'The keypad shows a chord with its labels hidden. Type the character it makes.', icon: 'grid', colour: 'grey', setup: true },
 };
 
 export function lessonText(n: number): string {
@@ -70,7 +70,7 @@ export function learnedChars(p: Profile): string {
   return learnedUpTo(TUTOR_LESSONS, Math.max(p.lesson, 1)) || 'abcdefgh';
 }
 
-/** Builds the plan for a run. Returns null with a reason when it cannot start. */
+/** Builds the plan for a run, or `{ error }` with a sentence to show when it can't start. */
 export function planFor(ex: Exercise, p: Profile, km: Keymap): Plan | { error: string } {
   const o = p.options;
   switch (ex.kind) {

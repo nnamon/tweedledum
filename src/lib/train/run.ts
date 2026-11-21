@@ -86,6 +86,8 @@ export class Run {
   missesHere = 0;
   startedAt: number | null = null;
   endedAt: number | null = null;
+  /** Set while the run is paused (Settings open); the clock does not count that time. */
+  pausedAt: number | null = null;
   private lastHitAt: number | null = null;
   readonly events: KeyEvent[] = [];
   /** Positions that had at least one miss, for marking the text. */
@@ -107,7 +109,21 @@ export class Run {
 
   elapsed(now: number): number {
     if (this.startedAt === null) return 0;
-    return (this.endedAt ?? now) - this.startedAt;
+    return (this.endedAt ?? this.pausedAt ?? now) - this.startedAt;
+  }
+
+  /** Stops the clock without ending the run. A run that has not started stays unstarted. */
+  pause(now: number) {
+    if (this.startedAt !== null && this.endedAt === null && this.pausedAt === null) this.pausedAt = now;
+  }
+
+  /** Restarts the clock. Shifting the start keeps the paused time out of wpm and key times. */
+  resume(now: number) {
+    if (this.pausedAt === null) return;
+    const gap = now - this.pausedAt;
+    this.pausedAt = null;
+    if (this.startedAt !== null) this.startedAt += gap;
+    if (this.lastHitAt !== null) this.lastHitAt += gap;
   }
 
   wpm(now: number): number {
@@ -162,7 +178,7 @@ export class Run {
 
   /** Ends the run early (timed tests, or the person stops). */
   stop(now: number) {
-    if (this.endedAt === null) this.endedAt = this.startedAt === null ? now : now;
+    if (this.endedAt === null) this.endedAt = this.pausedAt ?? now;
     if (this.startedAt === null) this.startedAt = now;
   }
 }

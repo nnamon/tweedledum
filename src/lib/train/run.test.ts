@@ -2,6 +2,28 @@ import { describe, expect, it } from 'vitest';
 import { Run, accuracyStars, hitScore, keyChar, speedStars, wpmOf } from './run';
 
 describe('Run', () => {
+  it('leaves paused time out of the clock and the key times', () => {
+    const r = new Run('abc');
+    r.press('a', 1000);
+    r.pause(2000);
+    expect(r.elapsed(60000)).toBe(1000);
+    r.resume(62000);
+    expect(r.elapsed(62000)).toBe(1000);
+    r.press('b', 62500);
+    expect(r.events[1].ms).toBe(1500);
+    r.press('c', 63000);
+    expect(r.elapsed(99999)).toBe(2000);
+  });
+
+  it('does not start the clock when paused before the first key', () => {
+    const r = new Run('ab');
+    r.pause(1000);
+    r.resume(5000);
+    expect(r.startedAt).toBeNull();
+    r.press('a', 6000);
+    expect(r.elapsed(7000)).toBe(1000);
+  });
+
   it('advances on hits and stays on misses', () => {
     const r = new Run('ab');
     expect(r.press('a', 1000)).toBe('hit');

@@ -1,16 +1,24 @@
 # Version history
 
+## 0.1.3
+
+- Added a Settings button to the run screen. The run pauses while Settings is open and carries on where you left it.
+- Settings shows the version and checks the site for a newer one. Update and reload installs it.
+- The sidebar shows the version.
+- Redrew the Settings icon as a gear; the old one looked like a sun.
+- Rewrote the README and some text in the app to read more plainly.
+
 ## 0.1.2
 
-- A Hand setting under Settings, Keypad picture. Choose Left hand if you wear the Twiddler on your left hand: the keypad picture is mirrored to match how the keypad sits against your fingers. The chords themselves do not change.
+- Added a Hand setting under Settings, Keypad picture. Left hand mirrors the keypad picture; the chords don't change.
 
 ## 0.1.1
 
-- Screens scroll again. In 0.1.0 nothing below the first screenful could be reached on a phone, or with a mouse wheel on a computer.
+- Fixed scrolling. In 0.1.0 nothing below the first screen could be reached on a phone or with a mouse wheel.
 
 ## 0.1.0
 
-The first version.
+First release.
 
 - The 69 lessons of the Twiddler Typing Tutor, with its scoring, speed and stars.
 - Random text, your own text, multi-character chords, and a chord chart where any key you press shows its chord.

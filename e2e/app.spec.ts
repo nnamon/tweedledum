@@ -123,3 +123,36 @@ test('left hand mirrors the keypad picture and keeps the chords', async ({ page 
   await page.goto('./#/chords');
   expect(await order()).toBe('1R 1M 1L');
 });
+
+test('Settings opens in the middle of a lesson and the lesson carries on', async ({ page }) => {
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.getByRole('heading', { name: 'Lesson 1' })).toBeVisible();
+  await typeText(page, 'aa ab');
+  await expect(page.locator('.stats')).toContainText('Hits5');
+
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await expect(page).toHaveURL(/#\/train\/settings$/);
+  await expect(page.getByText('Paused')).toBeVisible();
+  // Keys typed in Settings don't reach the lesson.
+  await page.keyboard.press('Space');
+  await page.getByRole('radiogroup', { name: 'Hand' }).getByText('Left hand').click();
+  await page.getByRole('button', { name: 'Lesson 1' }).click();
+
+  await expect(page.locator('.stats')).toContainText('Hits5');
+  await expect(page.locator('.stats')).toContainText('Misses0');
+  await expect(page.locator('.pad .side')).toHaveText('front, left hand');
+  await typeText(page, ' ');
+  await expect(page.locator('.stats')).toContainText('Hits6');
+
+  // The browser's back button closes Settings too.
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.goBack();
+  await expect(page.locator('.stats')).toContainText('Hits6');
+});
+
+test('Settings shows the version', async ({ page }) => {
+  await page.goto('./#/settings');
+  await expect(page.getByText(/^Tweedledum \d+\.\d+\.\d+$/)).toBeVisible();
+  await expect(page.getByText(/This is the newest version\.|is on the site/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Update and reload' })).toBeVisible();
+});

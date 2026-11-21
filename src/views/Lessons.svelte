@@ -23,7 +23,7 @@
 
 <div class="screen">
   <h1 class="large-title">Lessons</h1>
-  <p class="lede">The lessons of the Twiddler Typing Tutor. Finishing a lesson moves you to the next one; you can start any lesson at any time.</p>
+  <p class="lede">Finishing a lesson moves you on to the next. Tap any lesson to start it.</p>
   <div class="section">
     <label class="search">
       <span class="visually-hidden">Search lessons</span>

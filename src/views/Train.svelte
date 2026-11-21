@@ -1,13 +1,14 @@
 <script lang="ts">
   import { pct } from '../lib/util/format';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import Icon from '../ui/Icon.svelte';
   import Keypad from '../ui/Keypad.svelte';
   import Stars from '../ui/Stars.svelte';
+  import Settings from './Settings.svelte';
   import { formatChord, type Chord } from '../lib/chords/chord';
   import { keymap, store } from '../lib/state/app.svelte';
   import { current } from '../lib/state/current.svelte';
-  import { back, go } from '../lib/app/router.svelte';
+  import { back, go, route } from '../lib/app/router.svelte';
   import { EXERCISES, nextLesson, planFor, type Plan } from '../lib/train/exercise';
   import { Run, accuracyStars, keyChar, speedStars } from '../lib/train/run';
   import { dayKey, recordRun, type RunRec } from '../lib/state/profile';
@@ -61,7 +62,6 @@
     queueMicrotask(() => input?.focus());
   }
 
-  /** Same text again. */
   function again() {
     if (!plan) return;
     run = new Run(plan.text);
@@ -76,13 +76,43 @@
     newPlan();
     const t = setInterval(() => {
       now = performance.now();
-      if (plan?.seconds && run.startedAt !== null && !run.done && !summary && run.elapsed(now) >= plan.seconds * 1000) finish(true);
+      if (plan?.seconds && !inSettings && run.startedAt !== null && !run.done && !summary && run.elapsed(now) >= plan.seconds * 1000) finish(true);
     }, 200);
     return () => {
       clearInterval(t);
       stopVoice();
     };
   });
+
+  // ---- Settings in the middle of a run ----
+  // Settings opens at #/train/settings, inside this screen, so the run survives and the browser's
+  // back button returns to it. The clock stops while Settings is open.
+  const inSettings = $derived(route.path[1] === 'settings');
+
+  $effect(() => {
+    const open = inSettings;
+    untrack(() => {
+      const t = performance.now();
+      if (open) {
+        run.pause(t);
+        stopVoice();
+      } else {
+        run.resume(t);
+        lastHitAt = t;
+        now = t;
+        version++;
+        queueMicrotask(() => input?.focus());
+      }
+    });
+  });
+
+  function openSettings() {
+    go('train', 'settings');
+  }
+
+  function closeSettings() {
+    back(['train']);
+  }
 
   // ---- Chunks for dictation ----
   function chunkAt(pos: number): { start: number; end: number } {
@@ -107,6 +137,10 @@
   function onKey(e: KeyboardEvent) {
     if (e.target instanceof HTMLElement && e.target !== input && e.target.closest('input, textarea, select')) return;
     if (e.metaKey || e.ctrlKey) return;
+    if (inSettings) {
+      if (e.key === 'Escape' && !(e.target instanceof HTMLElement && e.target.closest('input, textarea, select'))) closeSettings();
+      return;
+    }
     if (summary) {
       if (e.key === 'Enter' && performance.now() - summaryAt > 800) {
         e.preventDefault();
@@ -134,7 +168,7 @@
     const el = e.target as HTMLInputElement;
     const text = el.value;
     el.value = '';
-    if (summary) return;
+    if (summary || inSettings) return;
     for (const ch of text) press(ch);
   }
 
@@ -312,6 +346,15 @@
 
 <svelte:window onkeydown={onKey} />
 
+{#if inSettings}
+  <div class="train">
+    <header class="bar">
+      <button class="text-button" onclick={closeSettings}><Icon name="back" size={20} /> {plan?.label ?? 'Practice'}</button>
+      <p class="paused">Paused</p>
+    </header>
+    <Settings />
+  </div>
+{:else}
 <div class="train" class:flash={missFlash}>
   <header class="bar">
     <button class="text-button" onclick={leave}><Icon name="back" size={20} /> Back</button>
@@ -325,6 +368,7 @@
       {:else if plan && plan.kind !== 'lesson' && plan.kind !== 'custom'}
         <button class="btn compact" onclick={newPlan} title="New text"><Icon name="shuffle" size={18} /> New</button>
       {/if}
+      <button class="btn compact" onclick={openSettings} aria-label="Settings" title="Settings (the run pauses)"><Icon name="gear" size={18} /></button>
     </div>
   </header>
 
@@ -343,7 +387,7 @@
     </dl>
 
     {#if missingChars.length}
-      <p class="notice warn">The layout in use has no chord for {missingChars.map((c) => `"${c}"`).join(', ')}. Those characters cannot be typed.</p>
+      <p class="notice warn">The layout in use has no chord for {missingChars.map((c) => `"${c}"`).join(', ')}, so you can't finish this text.</p>
     {/if}
 
     <div class="line-wrap" aria-live="off">
@@ -411,7 +455,7 @@
           {/if}
           <button class="btn" onclick={leave}>Back</button>
         </div>
-        <p class="hint-foot">Press Enter for the first button.</p>
+        <p class="hint-foot">Enter presses the first button.</p>
       </section>
     {:else}
       <section class="help">
@@ -447,6 +491,7 @@
     {/if}
   {/if}
 </div>
+{/if}
 
 <style>
   .train {
@@ -472,7 +517,15 @@
   }
 
   .bar-end {
+    display: flex;
+    gap: var(--tw-space-2);
     justify-self: end;
+  }
+
+  .paused {
+    font-size: var(--tw-text-foot);
+    font-weight: var(--tw-weight-semibold);
+    color: var(--tw-label2);
   }
 
   .title {

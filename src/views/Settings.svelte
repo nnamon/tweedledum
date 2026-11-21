@@ -8,6 +8,7 @@
   import { exportLayoutJson, importLayout, importLayoutText, LayoutError, type ImportResult } from '../lib/chords/import';
   import { chordText } from '../lib/chords/chord';
   import { sayChars, sayText, speechAvailable, voices } from '../lib/audio/voice';
+  import { RUNNING, isNewer, published, updateAndReload, type Published } from '../lib/app/update';
 
   const s = $derived(store.p.settings);
   const km = $derived(keymap());
@@ -30,7 +31,7 @@
       await navigator.clipboard.writeText(code);
       copied = true;
     } catch {
-      progressMsg = { ok: false, text: 'The browser would not copy to the clipboard. Select the code and copy it yourself.' };
+      progressMsg = { ok: false, text: "The browser won't copy to the clipboard. Select the code and copy it yourself." };
     }
   }
 
@@ -151,6 +152,18 @@
     layoutMsg = { ok: true, text: 'Back to the Twiddler default layout.' };
   }
 
+  // ---- Version ----
+  let site = $state<Published | null | 'checking'>('checking');
+  let reloading = $state(false);
+  onMount(() => {
+    void published().then((v) => (site = v));
+  });
+  function reload() {
+    reloading = true;
+    saveNow();
+    void updateAndReload();
+  }
+
   // ---- Voice ----
   let voiceList = $state<SpeechSynthesisVoice[]>([]);
   onMount(() => {
@@ -164,6 +177,26 @@
 
 <div class="screen">
   <h1 class="large-title">Settings</h1>
+
+  <section class="section">
+    <h2 class="section-head">Version</h2>
+    <div class="group">
+      <div class="row">
+        <span class="row-main">
+          <span class="row-title">Tweedledum {RUNNING.version}</span>
+          <span class="row-sub" role="status">
+            {#if site === 'checking'}Checking the site for a newer version.
+            {:else if site === null}Couldn't reach the site to check for a newer version.
+            {:else if isNewer(site)}Version {site.version} ({site.build}) is on the site. Reload to update.
+            {:else}This is the newest version.{/if}
+          </span>
+        </span>
+        <span class="mono small">{RUNNING.build}</span>
+      </div>
+      <button class="row" onclick={reload} disabled={reloading}><span class="row-main row-title link">{reloading ? 'Reloading' : 'Update and reload'}</span><Icon name="replay" size={20} /></button>
+    </div>
+    <p class="section-foot">Reloading ends a run in progress. Your progress is saved first.</p>
+  </section>
 
   <section class="section" id="progress">
     <h2 class="section-head">Progress</h2>
@@ -187,7 +220,7 @@
       </div>
     </div>
     {#if progressMsg}<p class="notice" class:ok={progressMsg.ok} class:bad={!progressMsg.ok} role="status">{progressMsg.text}</p>{/if}
-    <p class="section-foot">Loading replaces the progress in this browser; you are asked first.</p>
+    <p class="section-foot">Loading replaces the progress in this browser. You're asked first.</p>
   </section>
 
   <section class="section">
@@ -223,7 +256,7 @@
       <Segmented label="Keypad view" bind:value={s.view} options={[{ value: 'front', label: 'Front, facing you' }, { value: 'back', label: 'Back, as you hold it' }]} />
       <Segmented label="Chord notation" bind:value={s.notation} options={[{ value: 'classic', label: 'Classic: N+LROO' }, { value: 't4', label: 'Twiddler 4: T1 F1L F2R' }]} />
     </div>
-    <p class="section-foot">L, M and R are named as you look at the front of the keypad, as in Tek Gear's documents. Row 1 is under your index finger. Left hand mirrors the picture to match how the keypad sits against your fingers; the chords stay the same. NUM, ALT, CTRL and SHIFT are T1 to T4 on the Twiddler 4.</p>
+    <p class="section-foot">L, M and R are named as you look at the front of the keypad, as Tek Gear's documents do, and row 1 is under your index finger. Left hand mirrors the picture but doesn't change the chords. NUM, ALT, CTRL and SHIFT are T1 to T4 on the Twiddler 4.</p>
   </section>
 
   <section class="section">
@@ -277,7 +310,6 @@
   <section class="section">
     <h2 class="section-head">About</h2>
     <div class="group pad about">
-      <p>Tweedledum {__APP_VERSION__} ({__APP_BUILD__}). A typing tutor for the Twiddler chording keyboard.</p>
       <p>The lessons and the default layout come from the Tek Gear Twiddler Typing Tutor. Letter clips are from BeepBeep, made with the Kokoro-82M voice. Tweedledum is not made by or connected with Tek Gear.</p>
       <p><a href="https://github.com/nnamon/tweedledum" target="_blank" rel="noopener">Source code on GitHub</a></p>
     </div>

@@ -57,7 +57,6 @@ export function replaceProfile(p: Profile) {
 let cachedFor: unknown = undefined;
 let cached: Keymap = new Keymap(DEFAULT_LAYOUT);
 
-/** The layout in use. */
 export function layout(): Layout {
   const saved = store.p.layout;
   if (!saved) return DEFAULT_LAYOUT;

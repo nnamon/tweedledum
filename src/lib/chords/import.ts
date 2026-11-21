@@ -195,7 +195,7 @@ export function importConfig(bytes: Uint8Array, name: string): ImportResult {
       readV4V5(d, b);
       format = bytes[0] === 4 ? 'Twiddler 2 config (version 4)' : 'Twiddler 3 config (version 5)';
     } else {
-      throw new LayoutError('This config file is in a version Tweedledum cannot read. It reads versions 4, 5 and 7.');
+      throw new LayoutError("Tweedledum can't read this config file version, only versions 4, 5 and 7. Nothing was changed.");
     }
   } catch (e) {
     if (e instanceof LayoutError) throw e;

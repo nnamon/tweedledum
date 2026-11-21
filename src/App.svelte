@@ -51,6 +51,7 @@
       <div class="brand">
         <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" width="28" height="28" />
         <span>Tweedledum</span>
+        <span class="ver">{__APP_VERSION__}</span>
       </div>
       <ul>
         {#each TABS as t (t.id)}
@@ -176,6 +177,12 @@
       padding: 0 var(--tw-space-2) var(--tw-space-4);
       font-size: var(--tw-text-callout);
       font-weight: var(--tw-weight-semibold);
+    }
+
+    .brand .ver {
+      font-size: var(--tw-text-foot);
+      font-weight: var(--tw-weight-regular);
+      color: var(--tw-label2);
     }
 
     .brand img {

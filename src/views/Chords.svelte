@@ -47,7 +47,7 @@
 
 <div class="screen wide">
   <h1 class="large-title">Chords</h1>
-  <p class="lede">{km.layout.name}. {km.layout.entries.length} chords type text. Press any key on your Twiddler to see its chord, or pick one below.</p>
+  <p class="lede">{km.layout.name}, {km.layout.entries.length} chords that type text. Press a key on your Twiddler to see its chord, or pick one below.</p>
 
   <div class="layout">
     <div class="pad-col">
