@@ -439,6 +439,7 @@
           chord={showHint ? (plan.kind === 'multi' && multiEntry ? multiEntry.chord : nextChord) : null}
           multi={multiEntry && plan.kind !== 'multi' ? multiEntry.chord : null}
           view={settings.view}
+          hand={settings.hand}
           notation={settings.notation}
           showLabels={plan.mode !== 'quiz'}
         />

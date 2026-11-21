@@ -4,12 +4,15 @@
 
 export type Theme = 'system' | 'light' | 'dark';
 export type View = 'front' | 'back';
+export type Hand = 'right' | 'left';
 export type HintMode = 'always' | 'mistake' | 'delay' | 'never';
 
 export interface Settings {
   theme: Theme;
   /** Keypad picture: front shows the buttons as you look at them, back as your fingers find them. */
   view: View;
+  /** The hand you wear the Twiddler on. Left mirrors the keypad picture; chords are unchanged. */
+  hand: Hand;
   /** How chords are written: classic (LROO, N+ROOO) or Twiddler 4 (F1L F2R, T1 F1R). */
   notation: 'classic' | 't4';
   hints: HintMode;
@@ -34,6 +37,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   view: 'front',
+  hand: 'right',
   notation: 'classic',
   hints: 'always',
   hintDelayMs: 1500,
@@ -195,6 +199,12 @@ function num(x: unknown, fallback: number): number {
   return typeof x === 'number' && Number.isFinite(x) ? x : fallback;
 }
 
+function settingsOf(raw: unknown): Settings {
+  const s = { ...DEFAULT_SETTINGS, ...(isObj(raw) ? raw : {}) } as Settings;
+  if (s.hand !== 'left' && s.hand !== 'right') s.hand = DEFAULT_SETTINGS.hand;
+  return s;
+}
+
 /** Fills what an older or damaged profile lacks with defaults. Throws when it is not a profile. */
 export function normaliseProfile(raw: unknown): Profile {
   if (!isObj(raw) || raw.v !== 1) throw new Error('not a profile');
@@ -203,7 +213,7 @@ export function normaliseProfile(raw: unknown): Profile {
     ...base,
     id: typeof raw.id === 'string' ? raw.id : base.id,
     updated: num(raw.updated, base.updated),
-    settings: { ...DEFAULT_SETTINGS, ...(isObj(raw.settings) ? raw.settings : {}) } as Settings,
+    settings: settingsOf(raw.settings),
     options: structuredClone(DEFAULT_OPTIONS),
     layout: null,
     lesson: Math.max(1, Math.round(num(raw.lesson, 1))),

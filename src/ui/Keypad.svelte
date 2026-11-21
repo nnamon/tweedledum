@@ -6,7 +6,8 @@
   //
   // Front: the keypad as you look at it, with L on the right and R on the left; the L, M and R
   // names follow this view, as in Tek Gear's documents. Back: mirrored, as your fingers find the
-  // buttons from behind.
+  // buttons from behind. Worn on the left hand, the device sits mirrored against your fingers,
+  // so `hand: 'left'` mirrors the picture left to right; which button types what is unchanged.
   import type { Chord, Col, Thumb } from '../lib/chords/chord';
   import { chordWords, THUMB_NAMES } from '../lib/chords/chord';
   import type { Keymap } from '../lib/chords/layout';
@@ -16,6 +17,7 @@
     chord = null,
     multi = null,
     view = 'front',
+    hand = 'right',
     notation = 'classic',
     showLabels = true,
     caption = '',
@@ -24,6 +26,7 @@
     chord?: Chord | null;
     multi?: Chord | null;
     view?: 'front' | 'back';
+    hand?: 'right' | 'left';
     notation?: 'classic' | 't4';
     showLabels?: boolean;
     caption?: string;
@@ -34,7 +37,9 @@
   const COL_X = [70, 110, 150];
   const ROW_Y = [170, 224, 278, 332];
 
-  const cols = $derived<Col[]>(view === 'front' ? ['R', 'M', 'L'] : ['L', 'M', 'R']);
+  // The front view for the right hand has R on the left; the back view, or the left hand, mirrors it.
+  const mirrored = $derived((view === 'back') !== (hand === 'left'));
+  const cols = $derived<Col[]>(mirrored ? ['L', 'M', 'R'] : ['R', 'M', 'L']);
 
   // Thumb buttons, left to right in the front view: NUM, ALT, CTRL, SHIFT (T1 to T4).
   const THUMB_POS: { t: Thumb; x: number; y: number }[] = [
@@ -43,7 +48,7 @@
     { t: 'C', x: 138, y: 80 },
     { t: 'S', x: 166, y: 42 },
   ];
-  const thumbs = $derived(view === 'front' ? THUMB_POS : THUMB_POS.map((p) => ({ ...p, x: 220 - p.x })));
+  const thumbs = $derived(!mirrored ? THUMB_POS : THUMB_POS.map((p) => ({ ...p, x: 220 - p.x })));
   const T4_NUM: Record<Thumb, string> = { N: 'T1', A: 'T2', C: 'T3', S: 'T4' };
 
   function held(c: Chord | null, row: number, col: Col): boolean {
@@ -90,14 +95,14 @@
         {@const on = held(chord, row, col)}
         {@const ring = held(multi, row, col)}
         {@const labels = showLabels ? km.labelsFor(row, col) : { alone: null, withRow1: {} }}
-        <g class="key" class:on class:ring>
+        <g class="key" class:on class:ring data-key="{row}{col}">
           <rect x={x - KEY_W / 2} y={y - KEY_H / 2} width={KEY_W} height={KEY_H} rx="11" />
           {#if showLabels}
             <text x={x} y={y - 4} text-anchor="middle" class="alone" font-size="15">{show(labels.alone)}</text>
             {#if row === 1}
               <rect class="swatch c-{col}" x={x - 6} y={y + 9} width="12" height="5" rx="2" />
             {:else}
-              {@const order = view === 'front' ? (['L', 'M', 'R'] as Col[]) : (['R', 'M', 'L'] as Col[])}
+              {@const order = !mirrored ? (['L', 'M', 'R'] as Col[]) : (['R', 'M', 'L'] as Col[])}
               <text x={x} y={y + 14} text-anchor="middle" class="partners" font-size="10.5">
                 {#each order as first (first)}
                   <tspan class="c-{first}" dx={first === order[0] ? 0 : 2}>{show(labels.withRow1[first]) || ''}</tspan>
@@ -108,7 +113,7 @@
         </g>
       {/each}
     {/each}
-    <text x="110" y="366" text-anchor="middle" class="side" font-size="9">{view === 'front' ? 'front' : 'back'}</text>
+    <text x="110" y="366" text-anchor="middle" class="side" font-size="9">{view}{hand === 'left' ? ', left hand' : ''}</text>
   </svg>
   {#if caption}<figcaption>{caption}</figcaption>{/if}
 </figure>

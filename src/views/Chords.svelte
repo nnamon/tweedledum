@@ -66,7 +66,7 @@
           <span class="desc">Waiting for a key.</span>
         {/if}
       </div>
-      <Keypad {km} chord={selected?.chord ?? null} view={settings.view} notation={settings.notation} />
+      <Keypad {km} chord={selected?.chord ?? null} view={settings.view} hand={settings.hand} notation={settings.notation} />
       <label class="row say"><span class="row-main row-title">Say keys aloud</span><input type="checkbox" role="switch" class="switch" bind:checked={say} /></label>
     </div>
 

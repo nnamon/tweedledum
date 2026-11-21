@@ -98,3 +98,28 @@ test('a bundled layout loads and changes the chords', async ({ page }) => {
   await expect(page.locator('.explore')).toContainText('0M00');
   await shot(page, 'chords-tabspace');
 });
+
+test('left hand mirrors the keypad picture and keeps the chords', async ({ page }) => {
+  const order = async () => {
+    const xs = await page.locator('.pad g.key').evaluateAll((gs) =>
+      gs.filter((g) => g.getAttribute('data-key')!.startsWith('1')).map((g) => ({ k: g.getAttribute('data-key'), x: (g.querySelector('rect') as SVGRectElement).x.baseVal.value })),
+    );
+    return xs.sort((a, b) => a.x - b.x).map((o) => o.k).join(' ');
+  };
+  await page.goto('./#/chords');
+  await expect(page.locator('.pad g.key').first()).toBeVisible();
+  expect(await order()).toBe('1R 1M 1L');
+
+  await page.goto('./#/settings');
+  await page.getByRole('radiogroup', { name: 'Hand' }).getByText('Left hand').click();
+  await page.goto('./#/chords');
+  expect(await order()).toBe('1L 1M 1R');
+  await expect(page.locator('.pad .side')).toHaveText('front, left hand');
+  await page.keyboard.press('a');
+  await expect(page.locator('.pad g.key.on')).toHaveAttribute('data-key', '1R');
+
+  await page.goto('./#/settings');
+  await page.getByRole('radiogroup', { name: 'Keypad view' }).getByText(/Back/).click();
+  await page.goto('./#/chords');
+  expect(await order()).toBe('1R 1M 1L');
+});

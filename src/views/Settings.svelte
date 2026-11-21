@@ -219,10 +219,11 @@
   <section class="section">
     <h2 class="section-head">Keypad picture</h2>
     <div class="group pad">
+      <Segmented label="Hand" bind:value={s.hand} options={[{ value: 'right', label: 'Right hand' }, { value: 'left', label: 'Left hand' }]} />
       <Segmented label="Keypad view" bind:value={s.view} options={[{ value: 'front', label: 'Front, facing you' }, { value: 'back', label: 'Back, as you hold it' }]} />
       <Segmented label="Chord notation" bind:value={s.notation} options={[{ value: 'classic', label: 'Classic: N+LROO' }, { value: 't4', label: 'Twiddler 4: T1 F1L F2R' }]} />
     </div>
-    <p class="section-foot">L, M and R are named as you look at the front of the keypad, as in Tek Gear's documents. Row 1 is under your index finger. NUM, ALT, CTRL and SHIFT are T1 to T4 on the Twiddler 4.</p>
+    <p class="section-foot">L, M and R are named as you look at the front of the keypad, as in Tek Gear's documents. Row 1 is under your index finger. Left hand mirrors the picture to match how the keypad sits against your fingers; the chords stay the same. NUM, ALT, CTRL and SHIFT are T1 to T4 on the Twiddler 4.</p>
   </section>
 
   <section class="section">

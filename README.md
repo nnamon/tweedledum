@@ -12,7 +12,7 @@ A typing tutor for the [Twiddler](https://mytwiddler.com) one-handed chording ke
 - **The tutor's other modes.** Random text (group length, capitals, digits, punctuation), your own text, multi-character chords ("the ", "ing "...), and a key explorer that shows the chord of any key you press.
 - **Dictation.** Letters or words are read out and you type them without seeing them. Letters use recorded clips that work offline; words use your device voice.
 - **Drills.** Weak keys (built from your own statistics), timed tests, and chord reading (the keypad shows a chord; you type what it makes).
-- **A keypad picture** drawn from the layout in use, front or back view, with the next chord lit. Hints can show always, after a pause, after a miss, or never.
+- **A keypad picture** drawn from the layout in use, front or back view, mirrored for the left hand if you wear it there, with the next chord lit. Hints can show always, after a pause, after a miss, or never.
 - **Statistics** for this session, every past session, and all time: speed by day, accuracy, and per-character accuracy and timing.
 - **Your layout.** Load a Twiddler config file (version 4, 5 or 7, for the Twiddler 2, 3 and 4), a CSV from the Twiddler Tuner, or the tutor's JSON key map. TabSpace, MirrorWalk, DelEnt and TeaSan are built in.
 

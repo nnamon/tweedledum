@@ -77,4 +77,14 @@ describe('transfer', () => {
     const back = await importText(JSON.stringify(p));
     expect(back.settings.voiceRate).toBe(1);
   });
+
+  it('loads a profile from before the hand setting as right-handed, and keeps left', async () => {
+    const p = emptyProfile(5) as unknown as Record<string, unknown>;
+    delete (p.settings as Record<string, unknown>).hand;
+    expect((await importText(JSON.stringify(p))).settings.hand).toBe('right');
+    (p.settings as Record<string, unknown>).hand = 'left';
+    expect((await importText(JSON.stringify(p))).settings.hand).toBe('left');
+    (p.settings as Record<string, unknown>).hand = 'sideways';
+    expect((await importText(JSON.stringify(p))).settings.hand).toBe('right');
+  });
 });

@@ -1,5 +1,9 @@
 # Version history
 
+## 0.1.2
+
+- A Hand setting under Settings, Keypad picture. Choose Left hand if you wear the Twiddler on your left hand: the keypad picture is mirrored to match how the keypad sits against your fingers. The chords themselves do not change.
+
 ## 0.1.1
 
 - Screens scroll again. In 0.1.0 nothing below the first screenful could be reached on a phone, or with a mouse wheel on a computer.
