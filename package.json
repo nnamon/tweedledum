@@ -1,0 +1,38 @@
+{
+  "name": "tweedledum",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A typing tutor for the Twiddler one-handed chording keyboard. Lessons, dictation, drills and stats that you can carry between devices as a code or a file.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 7375",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 7375",
+    "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "lint:css": "stylelint \"src/**/*.{css,svelte}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "icons": "pwa-assets-generator"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tsconfig/svelte": "^5.0.8",
+    "@types/node": "^26.6.5",
+    "@vite-pwa/assets-generator": "^2.0.0",
+    "jsdom": "^30.1.2",
+    "postcss-html": "^1.8.0",
+    "stylelint": "^17.16.0",
+    "stylelint-config-standard": "^40.0.0",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.6",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.4",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "playwright-core": "1.63.0"
+  }
+}

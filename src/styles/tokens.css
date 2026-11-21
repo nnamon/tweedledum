@@ -1,0 +1,166 @@
+/*
+ * Design tokens: the only file with colour values, type sizes and spacing. stylelint rejects raw
+ * colours and sizes everywhere else.
+ *
+ * Colours are Apple's system colours (macOS and iOS), the same set RR73 uses. Each colour is
+ * light-dark(light, dark). The theme follows the system unless Settings sets data-theme on the
+ * root element, which pins color-scheme. Text keeps 4.5:1 on what it sits on.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --tw-sans: -apple-system, blinkmacsystemfont, "SF Pro Text", "Helvetica Neue", "Segoe UI Variable Text", "Segoe UI", arial, sans-serif;
+  --tw-mono: ui-monospace, "SF Mono", menlo, "Cascadia Mono", consolas, "Roboto Mono", monospace;
+
+  /* Type: the Apple text styles at the default size. */
+  --tw-text-large-title: 34px;
+  --tw-text-title: 22px;
+  --tw-text-title-s: 20px;
+  --tw-text-body: 17px;
+  --tw-text-callout: 16px;
+  --tw-text-sub: 15px;
+  --tw-text-foot: 13px;
+  --tw-text-caption: 12px;
+  --tw-text-tiny: 10px;
+  /* The line being typed, and the big numbers in the stats bar. */
+  --tw-text-practice: 30px;
+  --tw-text-practice-wide: 38px;
+  --tw-text-stat: 28px;
+  --tw-text-hero: 56px;
+  --tw-leading-large-title: 41px;
+  --tw-leading-title: 28px;
+  --tw-leading-body: 22px;
+  --tw-leading-sub: 20px;
+  --tw-leading-foot: 18px;
+  --tw-weight-regular: 400;
+  --tw-weight-medium: 500;
+  --tw-weight-semibold: 600;
+  --tw-weight-bold: 700;
+  --tw-tracking-body: -0.024em;
+
+  /* Space: a 4 px grid. */
+  --tw-space-px: 1px;
+  --tw-space-half: 2px;
+  --tw-space-1: 4px;
+  --tw-space-1-5: 6px;
+  --tw-space-2: 8px;
+  --tw-space-3: 12px;
+  --tw-space-4: 16px;
+  --tw-space-5: 20px;
+  --tw-space-6: 24px;
+  --tw-space-8: 32px;
+  --tw-space-12: 48px;
+
+  /* Shape */
+  --tw-radius-s: 5px;
+  --tw-radius-m: 8px;
+  --tw-radius-l: 10px;
+  --tw-radius-xl: 12px;
+  --tw-radius-pill: 999px;
+  --tw-hairline: 1px;
+
+  /* Sizes */
+  --tw-tap: 44px;
+  --tw-button: 46px;
+  --tw-icon: 24px;
+  --tw-row-icon: 30px;
+  --tw-sidebar: 240px;
+  --tw-reading: 720px;
+  --tw-wide: 1080px;
+  --tw-tabbar-h: 50px;
+  --tw-chart-h: 160px;
+  --tw-bar-w: 6px;
+
+  --tw-safe-top: env(safe-area-inset-top, 0px);
+  --tw-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tw-safe-left: env(safe-area-inset-left, 0px);
+  --tw-safe-right: env(safe-area-inset-right, 0px);
+  --tw-tabbar: calc(var(--tw-tabbar-h) + var(--tw-safe-bottom));
+
+  --tw-transition: 160ms;
+
+  /* Surfaces */
+  --tw-bg: light-dark(#F2F2F7, #000000);
+  --tw-surface: light-dark(#FFFFFF, #1C1C1E);
+  --tw-surface-2: light-dark(#F2F2F7, #2C2C2E);
+  --tw-sidebar-bg: light-dark(rgb(236 236 241 / 85%), rgb(30 30 32 / 85%));
+  --tw-dock: light-dark(rgb(249 249 249 / 82%), rgb(29 29 31 / 82%));
+  --tw-material-blur: blur(20px) saturate(180%);
+  --tw-fill: light-dark(rgb(120 120 128 / 20%), rgb(120 120 128 / 36%));
+  --tw-fill2: light-dark(rgb(120 120 128 / 16%), rgb(120 120 128 / 32%));
+  --tw-fill3: light-dark(rgb(118 118 128 / 12%), rgb(118 118 128 / 24%));
+  --tw-sep: light-dark(rgb(60 60 67 / 29%), rgb(84 84 88 / 60%));
+  --tw-sep-strong: light-dark(#C6C6C8, #38383A);
+  --tw-dim: light-dark(rgb(0 0 0 / 20%), rgb(0 0 0 / 48%));
+  --tw-hover: light-dark(rgb(0 0 0 / 5%), rgb(255 255 255 / 8%));
+
+  /* Text */
+  --tw-label: light-dark(#000000, #FFFFFF);
+  --tw-label2: light-dark(#646468, rgb(235 235 245 / 62%));
+  --tw-label3: light-dark(#6D6D71, rgb(235 235 245 / 55%));
+  --tw-chev: light-dark(#929296, rgb(235 235 245 / 40%));
+  --tw-on-fill: #FFF;
+
+  /* Accent and state: systemBlue, systemRed, systemGreen, systemOrange, Increased Contrast as text. */
+  --tw-accent: light-dark(#195CCC, #60BAFF);
+  --tw-accent-fill: #1E6EF4;
+  --tw-accent-soft: light-dark(rgb(0 136 255 / 15%), rgb(0 145 255 / 24%));
+  --tw-ok: light-dark(#007C2D, #4AD968);
+  --tw-ok-fill: light-dark(#34C759, #30D158);
+  --tw-ok-soft: light-dark(rgb(52 199 89 / 18%), rgb(48 209 88 / 26%));
+  --tw-bad: light-dark(#C21226, #FF6E71);
+  --tw-bad-fill: #E9152D;
+  --tw-bad-soft: light-dark(rgb(255 56 60 / 14%), rgb(255 66 69 / 24%));
+  --tw-warn: light-dark(#AC4900, #FFA056);
+  --tw-warn-soft: light-dark(rgb(255 141 40 / 20%), rgb(255 146 48 / 26%));
+  --tw-star: light-dark(#B25000, #FFB340);
+
+  /* Chord columns on the keypad picture: L systemRed, M systemBlue, R systemGreen, as text. */
+  --tw-col-l: light-dark(#C21226, #FF6E71);
+  --tw-col-m: light-dark(#195CCC, #60BAFF);
+  --tw-col-r: light-dark(#007C2D, #4AD968);
+
+  /* The keypad picture */
+  --tw-pad-body: light-dark(#D1D1D6, #2C2C2E);
+  --tw-pad-edge: light-dark(#AEAEB2, #48484A);
+  --tw-pad-key: light-dark(#FFFFFF, #48484A);
+  --tw-pad-key-edge: light-dark(#C7C7CC, #636366);
+  --tw-pad-key-text: light-dark(#1C1C1E, #F2F2F7);
+  --tw-pad-press: #1E6EF4;
+  --tw-pad-press-text: #FFF;
+  --tw-pad-thumb: light-dark(#E5E5EA, #3A3A3C);
+  --tw-pad-next: light-dark(rgb(0 136 255 / 25%), rgb(0 145 255 / 35%));
+
+  /* Controls */
+  --tw-seg-sel: light-dark(#FFF, #636366);
+  --tw-thumb: #FFF;
+  --tw-switch-on: light-dark(#34C759, #30D158);
+  --tw-shadow-seg: light-dark(rgb(0 0 0 / 12%), rgb(0 0 0 / 35%));
+  --tw-shadow-thumb: light-dark(rgb(0 0 0 / 16%), rgb(0 0 0 / 35%));
+  --tw-shadow-sheet: light-dark(rgb(0 0 0 / 18%), rgb(0 0 0 / 60%));
+  --tw-ic-blue: light-dark(#0088FF, #0091FF);
+  --tw-ic-green: light-dark(#34C759, #30D158);
+  --tw-ic-orange: light-dark(#FF8D28, #FF9230);
+  --tw-ic-purple: light-dark(#AF52DE, #BF5AF2);
+  --tw-ic-pink: light-dark(#FF2D55, #FF375F);
+  --tw-ic-teal: light-dark(#00C3D0, #00D2E0);
+  --tw-ic-indigo: light-dark(#6155F5, #6D7CFF);
+  --tw-ic-grey: #8E8E93;
+  --tw-ic-red: light-dark(#FF383C, #FF4245);
+  --tw-ic-yellow: light-dark(#FFCC00, #FFD60A);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --tw-transition: 0ms;
+  }
+}

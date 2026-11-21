@@ -1,0 +1,39 @@
+# All Tweedledum tooling runs in containers; nothing is installed on the host.
+#
+#   docker compose run --rm -T dev npm install
+#   docker compose run --rm -T dev npm test
+#   docker compose run --rm -T dev npm run check
+#   docker compose run --rm -T dev npm run lint:css
+#   docker compose run --rm -T dev npm run build
+#   docker compose run --rm --service-ports dev npm run dev     # dev server on :7375
+#   docker compose run --rm -T e2e npx playwright test
+#
+# Deployment is GitHub Pages, built by .github/workflows/pages.yml (also in a container).
+
+name: tweedledum
+
+services:
+  dev:
+    image: node:24-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    ports:
+      - "7375:7375"
+    environment:
+      - CI=1
+    command: ["bash"]
+
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.63.0-noble
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    environment:
+      - CI=1
+    command: ["npx", "playwright", "test"]
+
+volumes:
+  node_modules:
