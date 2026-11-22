@@ -1,5 +1,9 @@
 # Version history
 
+## 0.1.5
+
+- Added Learn chords under Practice: one chord at a time with spaced repetition, for word chords, letters, digits or symbols. A word chord only counts when the whole word arrives as one chord, not letter by letter. What you have learnt is saved in your progress.
+
 ## 0.1.4
 
 - Added lessons 70 to 344, after the tutor's 69: common words, letter groups, capitals, numbers, punctuation, sentences, terminal commands and code, phrases, speed and review. If you had finished lesson 69, you continue from lesson 70.

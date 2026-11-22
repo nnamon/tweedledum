@@ -16,6 +16,7 @@ Lessons 1 to 69 are the tutor's: they start with 4 letters and end with sentence
 Tweedledum adds these:
 
 - Letter and word dictation. The app reads the text out and hides it, and you type what you hear. Letters are recorded clips that work offline; words use your device's speech voice.
+- Learn chords: one chord at a time with spaced repetition, for word chords, letters, digits or symbols. It tells a word chord from the same letters typed one by one by the gaps between them, and counts only the chord.
 - Weak keys, a drill built from the characters you miss most and type slowest.
 - Timed tests on common words, from 30 s to 5 min.
 - Chord reading: the keypad shows a chord with its labels hidden, and you type the character it makes.

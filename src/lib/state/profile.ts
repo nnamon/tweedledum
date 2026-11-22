@@ -2,6 +2,8 @@
 // can be copied to another copy of the app as a code or a file (transfer.ts). Nothing is sent to
 // a server.
 
+import type { ChordRec } from '../train/drill';
+
 export type Theme = 'system' | 'light' | 'dark';
 export type View = 'front' | 'back';
 export type Hand = 'right' | 'left';
@@ -154,6 +156,8 @@ export interface Profile {
   days: Record<string, DayRec>;
   sessions: SessionRec[];
   runs: RunRec[];
+  /** Learn chords: how well each chord is known, by `chord|output`. */
+  chords: Record<string, ChordRec>;
 }
 
 /** Runs kept in full. Older runs still count in the day, session, lesson and key totals. */
@@ -184,6 +188,7 @@ export function emptyProfile(now = Date.now()): Profile {
     days: {},
     sessions: [],
     runs: [],
+    chords: {},
   };
 }
 
@@ -205,6 +210,16 @@ function settingsOf(raw: unknown): Settings {
   return s;
 }
 
+function chordsOf(raw: unknown): Record<string, ChordRec> {
+  const out: Record<string, ChordRec> = {};
+  if (!isObj(raw)) return out;
+  for (const [k, v] of Object.entries(raw)) {
+    if (!isObj(v)) continue;
+    out[k] = { box: Math.min(5, Math.max(0, Math.round(num(v.box, 0)))), good: num(v.good, 0), seen: num(v.seen, 0), last: num(v.last, 0) };
+  }
+  return out;
+}
+
 /** Fills what an older or damaged profile lacks with defaults. Throws when it is not a profile. */
 export function normaliseProfile(raw: unknown): Profile {
   if (!isObj(raw) || raw.v !== 1) throw new Error('not a profile');
@@ -222,6 +237,7 @@ export function normaliseProfile(raw: unknown): Profile {
     days: isObj(raw.days) ? (raw.days as Profile['days']) : {},
     sessions: Array.isArray(raw.sessions) ? (raw.sessions as SessionRec[]) : [],
     runs: Array.isArray(raw.runs) ? (raw.runs as RunRec[]) : [],
+    chords: chordsOf(raw.chords),
   };
   if (isObj(raw.options)) {
     for (const k of Object.keys(DEFAULT_OPTIONS) as (keyof ExerciseOptions)[]) {

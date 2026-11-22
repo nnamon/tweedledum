@@ -130,6 +130,26 @@ test('a Tuner config file loads and moves with the progress code', async ({ page
   await other.close();
 });
 
+test('learn chords counts a word chord only when it comes in one burst', async ({ page }) => {
+  await page.goto('./#/practice');
+  await page.getByRole('button', { name: /Learn chords/ }).click();
+  await expect(page.getByRole('heading', { name: 'Learn chords' })).toBeVisible();
+  await expect(page.getByText('0 of 11 learnt', { exact: false })).toBeVisible();
+  await shot(page, 'learn-pick');
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.locator('.target')).toHaveText('the␣');
+  // A new chord is shown on the keypad, so a burst counts as right with the chord shown.
+  await page.keyboard.type('the ');
+  await expect(page.locator('.feedback')).toHaveText('the␣: right, with the chord shown.');
+  await expect(page.locator('.target')).toHaveText('The␣');
+  await shot(page, 'learn-card');
+  await page.keyboard.type('The ', { delay: 200 });
+  await expect(page.locator('.feedback')).toContainText('The␣ was typed letter by letter.');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('heading', { name: 'Session finished' })).toBeVisible();
+  await expect(page.getByText('Letter by letter: 1')).toBeVisible();
+});
+
 test('left hand mirrors the keypad picture and keeps the chords', async ({ page }) => {
   const order = async () => {
     const xs = await page.locator('.pad g.key').evaluateAll((gs) =>

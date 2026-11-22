@@ -73,6 +73,13 @@
   {/each}
 
   <section class="section">
+    <h2 class="section-head">Chords</h2>
+    <div class="group">
+      <NavRow icon="sparkles" colour="indigo" title="Learn chords" sub="One chord at a time, with spaced repetition: word chords, letters, digits or symbols. Word chords only count when typed as one chord." onclick={() => go('learn')} />
+    </div>
+  </section>
+
+  <section class="section">
     <h2 class="section-head">Reference</h2>
     <div class="group">
       <NavRow icon="keyboard" colour="teal" title="Chord chart and key explorer" sub="Every chord of the layout in use. Press any key on your Twiddler to see its chord." onclick={() => go('chords')} />
