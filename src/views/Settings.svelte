@@ -310,7 +310,7 @@
   <section class="section">
     <h2 class="section-head">About</h2>
     <div class="group pad about">
-      <p>The lessons and the default layout come from the Tek Gear Twiddler Typing Tutor. Letter clips are from BeepBeep, made with the Kokoro-82M voice. Tweedledum is not made by or connected with Tek Gear.</p>
+      <p>Lessons 1 to 69 and the default layout come from the Tek Gear Twiddler Typing Tutor; lessons 70 to 344 were written for Tweedledum. Letter clips are from BeepBeep, made with the Kokoro-82M voice. Tweedledum is not made by or connected with Tek Gear.</p>
       <p><a href="https://github.com/nnamon/tweedledum" target="_blank" rel="noopener">Source code on GitHub</a></p>
     </div>
   </section>

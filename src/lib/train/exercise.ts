@@ -1,6 +1,6 @@
 // The exercises, and how each becomes a plan for one run.
 
-import { TUTOR_LESSONS } from '../lessons/tutor';
+import { LESSONS } from '../lessons/lessons';
 import type { Keymap } from '../chords/layout';
 import type { Profile } from '../state/profile';
 import { groupsFrom, keysetOf, learnedUpTo, multiChordWords, randomGroups, randomWords, weakDrill } from './text';
@@ -50,7 +50,7 @@ export interface ExerciseInfo {
 }
 
 export const EXERCISES: Record<Exercise['kind'], ExerciseInfo> = {
-  lesson: { kind: 'lesson', title: 'Lessons', blurb: 'The 69 lessons of the Twiddler Typing Tutor, from 4 letters to full sentences.', icon: 'book', colour: 'blue', setup: false },
+  lesson: { kind: 'lesson', title: 'Lessons', blurb: '344 lessons: the 69 of the Twiddler Typing Tutor, then words, numbers, punctuation, sentences and terminal commands.', icon: 'book', colour: 'blue', setup: false },
   random: { kind: 'random', title: 'Random text', blurb: 'Groups of random characters. Choose the group length and add capitals, digits or punctuation.', icon: 'shuffle', colour: 'indigo', setup: true },
   custom: { kind: 'custom', title: 'Your own text', blurb: 'Paste any text and type it.', icon: 'text', colour: 'teal', setup: true },
   multi: { kind: 'multi', title: 'Multi-character chords', blurb: 'Words with a chord of their own, such as "the " and "ing ". The keypad shows the word chord.', icon: 'sparkles', colour: 'purple', setup: false },
@@ -62,12 +62,12 @@ export const EXERCISES: Record<Exercise['kind'], ExerciseInfo> = {
 };
 
 export function lessonText(n: number): string {
-  return TUTOR_LESSONS.find((l) => l.n === n)?.text ?? '';
+  return LESSONS.find((l) => l.n === n)?.text ?? '';
 }
 
 /** Characters the person has met: the lessons up to the current one, at least a to h. */
 export function learnedChars(p: Profile): string {
-  return learnedUpTo(TUTOR_LESSONS, Math.max(p.lesson, 1)) || 'abcdefgh';
+  return learnedUpTo(LESSONS, Math.max(p.lesson, 1)) || 'abcdefgh';
 }
 
 /** Builds the plan for a run, or `{ error }` with a sentence to show when it can't start. */
@@ -75,7 +75,7 @@ export function planFor(ex: Exercise, p: Profile, km: Keymap): Plan | { error: s
   const o = p.options;
   switch (ex.kind) {
     case 'lesson': {
-      const l = TUTOR_LESSONS.find((x) => x.n === ex.n);
+      const l = LESSONS.find((x) => x.n === ex.n);
       if (!l) return { error: 'That lesson does not exist.' };
       return { kind: 'lesson', label: `Lesson ${l.n}`, lesson: l.n, text: l.text, mode: 'copy', note: `${l.stage} · keys ${keysetOf(l.text)}` };
     }
@@ -123,6 +123,6 @@ export function planFor(ex: Exercise, p: Profile, km: Keymap): Plan | { error: s
 
 /** The lesson after n, or null after the last. */
 export function nextLesson(n: number): number | null {
-  const i = TUTOR_LESSONS.findIndex((l) => l.n === n);
-  return i >= 0 && i + 1 < TUTOR_LESSONS.length ? TUTOR_LESSONS[i + 1].n : null;
+  const i = LESSONS.findIndex((l) => l.n === n);
+  return i >= 0 && i + 1 < LESSONS.length ? LESSONS[i + 1].n : null;
 }

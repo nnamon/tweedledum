@@ -3,15 +3,15 @@
   import Stars from '../ui/Stars.svelte';
   import { store } from '../lib/state/app.svelte';
   import { start } from '../lib/state/current.svelte';
-  import { TUTOR_LESSONS } from '../lib/lessons/tutor';
+  import { LESSONS } from '../lib/lessons/lessons';
   import { keysetOf } from '../lib/train/text';
 
   let query = $state('');
 
   const stages = $derived.by(() => {
     const q = query.trim().toLowerCase();
-    const out: { stage: string; lessons: typeof TUTOR_LESSONS }[] = [];
-    for (const l of TUTOR_LESSONS) {
+    const out: { stage: string; lessons: typeof LESSONS }[] = [];
+    for (const l of LESSONS) {
       if (q && !(`${l.n} ${l.text} ${keysetOf(l.text)} ${l.stage}`.toLowerCase().includes(q))) continue;
       let g = out.find((x) => x.stage === l.stage);
       if (!g) out.push((g = { stage: l.stage, lessons: [] }));

@@ -100,6 +100,36 @@ test('a bundled layout loads and changes the chords', async ({ page }) => {
   await shot(page, 'chords-tabspace');
 });
 
+test('a Tuner config file loads and moves with the progress code', async ({ page, browser }) => {
+  // A version 7 file as the Tuner downloads it, with a stamp in bytes 0 to 3: a on row 1 R, and
+  // 1 on CTRL (T3) with row 1 R.
+  const cfg = Buffer.alloc(128 + 16);
+  cfg.set([0x1a, 0x53, 0x1c, 0x06, 7], 0);
+  cfg.writeUInt16LE(2, 8);
+  cfg.writeUInt32LE(0x002, 128);
+  cfg.set([2, 0, 0x04], 132);
+  cfg.writeUInt32LE(0x102, 136);
+  cfg.set([2, 0, 0x1e], 140);
+
+  await page.goto('./#/settings');
+  await page.locator('input[type=file][accept*=".cfg"]').setInputFiles({ name: 'T3Num.cfg', mimeType: 'application/octet-stream', buffer: cfg });
+  await expect(page.getByText(/Loaded T3Num.*version 7/)).toBeVisible();
+  await page.getByRole('button', { name: /Copy progress code/ }).click();
+  const code = await page.getByLabel('Progress code', { exact: true }).inputValue();
+
+  const other = await browser.newContext();
+  const p2 = await other.newPage();
+  await p2.goto('./#/settings');
+  await p2.getByLabel('Progress code to load').fill(code);
+  p2.once('dialog', (d) => d.accept());
+  await p2.getByRole('button', { name: 'Load code' }).click();
+  await expect(p2.getByText(/Progress loaded/)).toBeVisible();
+  await p2.goto('./#/chords');
+  await p2.keyboard.press('1');
+  await expect(p2.locator('.explore')).toContainText('C+R000');
+  await other.close();
+});
+
 test('left hand mirrors the keypad picture and keeps the chords', async ({ page }) => {
   const order = async () => {
     const xs = await page.locator('.pad g.key').evaluateAll((gs) =>

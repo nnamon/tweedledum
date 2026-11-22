@@ -28,7 +28,8 @@ describe('planFor', () => {
 
   it('runs through the lessons in order', () => {
     expect(nextLesson(1)).toBe(2);
-    expect(nextLesson(69)).toBeNull();
+    expect(nextLesson(69)).toBe(70);
+    expect(nextLesson(344)).toBeNull();
   });
 
   it('keeps timed words within the letters met so far when asked', () => {

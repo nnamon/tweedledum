@@ -87,4 +87,12 @@ describe('transfer', () => {
     (p.settings as Record<string, unknown>).hand = 'sideways';
     expect((await importText(JSON.stringify(p))).settings.hand).toBe('right');
   });
+
+  it('moves someone who finished lesson 69 on to lesson 70, and leaves others where they are', async () => {
+    const rec = { runs: 1, bestWpm: 20, bestAcc: 0.95, bestScore: 100, bestStars: 6, last: 1 };
+    const done = { ...emptyProfile(5), lesson: 69, lessons: { '69': rec } };
+    expect((await importText(JSON.stringify(done))).lesson).toBe(70);
+    const midway = { ...emptyProfile(5), lesson: 40, lessons: { '39': rec } };
+    expect((await importText(JSON.stringify(midway))).lesson).toBe(40);
+  });
 });

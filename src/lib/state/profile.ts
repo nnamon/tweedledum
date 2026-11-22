@@ -236,6 +236,8 @@ export function normaliseProfile(raw: unknown): Profile {
       keys: Array.isArray(raw.layout.keys) ? (raw.layout.keys as unknown[]).filter(isPair) : [],
     };
   }
+  // Lesson 69 was the last until 0.1.4 added more, so finishing it moved nobody on.
+  if (p.lesson === 69 && p.lessons['69']) p.lesson = 70;
   return p;
 }
 

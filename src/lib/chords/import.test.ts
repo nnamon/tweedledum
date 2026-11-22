@@ -37,6 +37,14 @@ describe('binary config files', () => {
     expect(r.skipped).toBe(8);
   });
 
+  it('reads a version 7 config downloaded from the Tuner, which stamps its first 4 bytes', () => {
+    const bytes = file('./fixtures/t4-multi-char.cfg');
+    bytes.set([0x1a, 0x53, 0x1c, 0x06], 0);
+    const r = importLayout(bytes, 'tuner.cfg');
+    expect(r.format).toMatch(/version 7/);
+    expect(new Keymap(r.layout).outputOf(parseChord('ROOO')!)).toBe('test');
+  });
+
   it('reads the bundled layouts', () => {
     for (const n of ['tabspace', 'mirrorwalk', 'mirrorwalk_nomcc', 'delent', 'teasan']) {
       const r = importLayout(file(`../../../public/layouts/${n}.cfg`), `${n}.cfg`);
@@ -53,6 +61,13 @@ describe('binary config files', () => {
     const ours = new Keymap(DEFAULT_LAYOUT);
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789 .,;:\'"!?-_/\\()[]{}<>=+*&^%$#@`~|';
     expect(table(km, chars)).toEqual(table(ours, chars));
+  });
+
+  // A Tuner download of the factory layout with T1 and T3 swapped, so digits are on CTRL.
+  const t3num = new URL('./fixtures/local/t4-tuner-t3num.cfg', import.meta.url);
+  it.skipIf(!existsSync(t3num))('reads a Tuner download with digits moved to T3', () => {
+    const km = new Keymap(importLayout(new Uint8Array(readFileSync(t3num)), 't3num.cfg').layout);
+    expect(table(km, '1590a')).toEqual({ '1': 'C+ROOO', '5': 'C+MOOO', '9': 'C+LOOO', '0': 'C+OLOO', a: 'ROOO' });
   });
 
   it('refuses other files', () => {

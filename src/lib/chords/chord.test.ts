@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { chordT4, chordText, parseChord } from './chord';
 import { DEFAULT_LAYOUT, Keymap } from './layout';
-import { TUTOR_LESSONS } from '../lessons/tutor';
+import { LESSONS } from '../lessons/lessons';
 
 describe('parseChord', () => {
   it('reads the tutor notation', () => {
@@ -41,8 +41,8 @@ describe('default layout', () => {
     expect(chordText(km.chordFor('T')!)).toBe('S+MOOR');
   });
 
-  it('types every character of every tutor lesson', () => {
-    for (const l of TUTOR_LESSONS) expect(km.missing(l.text), `lesson ${l.n}`).toEqual([]);
+  it('types every character of every lesson', () => {
+    for (const l of LESSONS) expect(km.missing(l.text), `lesson ${l.n}`).toEqual([]);
   });
 
   it('labels the keypad as the tutor does', () => {

@@ -188,7 +188,9 @@ export function importConfig(bytes: Uint8Array, name: string): ImportResult {
   const b = new Builder();
   let format: string;
   try {
-    if (bytes.length >= 128 && d.getUint32(0, true) === 0 && bytes[4] === 7) {
+    // Version 7 has its version in byte 4; v4 and v5 files hold 1 or 16 there. Bytes 0 to 3 are
+    // zero in factory files and a stamp in files downloaded from the Tuner.
+    if (bytes.length >= 128 && bytes[4] === 7) {
       readV7(d, b);
       format = 'Twiddler 4 config (version 7)';
     } else if (bytes[0] === 4 || bytes[0] === 5) {

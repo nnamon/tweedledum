@@ -1,5 +1,10 @@
 # Version history
 
+## 0.1.4
+
+- Added lessons 70 to 344, after the tutor's 69: common words, letter groups, capitals, numbers, punctuation, sentences, terminal commands and code, phrases, speed and review. If you had finished lesson 69, you continue from lesson 70.
+- Fixed loading Twiddler 4 config files downloaded from the Tuner. Tweedledum refused them as an unknown version.
+
 ## 0.1.3
 
 - Added a Settings button to the run screen. The run pauses while Settings is open and carries on where you left it.

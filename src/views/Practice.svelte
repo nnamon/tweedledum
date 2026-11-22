@@ -6,12 +6,12 @@
   import { start } from '../lib/state/current.svelte';
   import { go } from '../lib/app/router.svelte';
   import { EXERCISES, type Exercise } from '../lib/train/exercise';
-  import { TUTOR_LESSONS } from '../lib/lessons/tutor';
+  import { LESSONS } from '../lib/lessons/lessons';
   import { keysetOf } from '../lib/train/text';
   import { dayKey } from '../lib/state/profile';
 
   const lessonN = $derived(store.p.lesson);
-  const lesson = $derived(TUTOR_LESSONS.find((l) => l.n === lessonN) ?? TUTOR_LESSONS[0]);
+  const lesson = $derived(LESSONS.find((l) => l.n === lessonN) ?? LESSONS[0]);
   const rec = $derived(store.p.lessons[String(lesson.n)]);
   const today = $derived(store.p.days[dayKey(Date.now())]);
 
@@ -22,7 +22,7 @@
   }
 
   const groups: { head: string; kinds: Exercise['kind'][]; foot?: string }[] = [
-    { head: 'From the Twiddler Typing Tutor', kinds: ['lesson', 'random', 'custom', 'multi'] },
+    { head: 'Lessons and texts', kinds: ['lesson', 'random', 'custom', 'multi'] },
     { head: 'Listening', kinds: ['dictLetters', 'dictWords'] },
     { head: 'Drills', kinds: ['weak', 'timed', 'quiz'] },
   ];

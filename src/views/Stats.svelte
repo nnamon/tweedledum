@@ -6,7 +6,7 @@
   import { formatChord } from '../lib/chords/chord';
   import { keymap, store } from '../lib/state/app.svelte';
   import { SESSION_GAP_MS, dayKey, type RunRec, type SessionRec } from '../lib/state/profile';
-  import { TUTOR_LESSONS } from '../lib/lessons/tutor';
+  import { LESSONS } from '../lib/lessons/lessons';
 
   type Tab = 'session' | 'all' | 'sessions';
   let tab = $state<Tab>('session');
@@ -185,7 +185,7 @@
           <div class="row"><span class="row-main row-title">Average speed</span><span class="row-value">{wpmOf(totals.hits, totals.ms).toFixed(1)} wpm</span></div>
           <div class="row"><span class="row-main row-title">Fastest run</span><span class="row-value">{totals.best.toFixed(1)} wpm</span></div>
           <div class="row"><span class="row-main row-title">Accuracy</span><span class="row-value">{pct(accOf(totals.hits, totals.miss), 1)}%</span></div>
-          <div class="row"><span class="row-main row-title">Lessons practised</span><span class="row-value">{lessonsDone} of {TUTOR_LESSONS.length}</span></div>
+          <div class="row"><span class="row-main row-title">Lessons practised</span><span class="row-value">{lessonsDone} of {LESSONS.length}</span></div>
         </div>
       </section>
       <section class="section">
