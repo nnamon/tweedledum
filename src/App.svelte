@@ -8,6 +8,7 @@
   import Setup from './views/Setup.svelte';
   import Train from './views/Train.svelte';
   import Learn from './views/Learn.svelte';
+  import Editor from './views/Editor.svelte';
   import { go, route, type Tab } from './lib/app/router.svelte';
   import { store } from './lib/state/app.svelte';
   import { current } from './lib/state/current.svelte';
@@ -23,7 +24,7 @@
 
   const page = $derived(route.path[0]);
   const training = $derived(page === 'train' || page === 'learn');
-  const tab = $derived<Tab>(page === 'setup' ? 'practice' : (TABS.find((t) => t.id === page)?.id ?? 'practice'));
+  const tab = $derived<Tab>(page === 'setup' ? 'practice' : page === 'editor' ? 'settings' : (TABS.find((t) => t.id === page)?.id ?? 'practice'));
 
   // The run screen needs an exercise; after a reload there is none, so go back to Practice.
   $effect(() => {
@@ -73,6 +74,8 @@
       {#if current.ex}<Train />{/if}
     {:else if page === 'setup' && setupKind && EXERCISES[setupKind]}
       {#key setupKind}<Setup kind={setupKind} />{/key}
+    {:else if page === 'editor'}
+      <Editor />
     {:else if tab === 'lessons'}
       <Lessons />
     {:else if tab === 'chords'}

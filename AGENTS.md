@@ -28,7 +28,7 @@ docker compose run --rm -T e2e npx playwright test
 - Stored notation is the tutor's: four letters, row 1 first, `O` for an empty row, thumbs before `+` (`N+ROOO`). People see `0` for an empty row (`formatChord`).
 - L, M and R are named as you face the keypad (Tek Gear's convention). The front view of the keypad picture has R on the left.
 - Thumb buttons: N, A, C, S = NUM, ALT, CTRL, SHIFT = T1 to T4 on the Twiddler 4.
-- Config formats are described in `src/lib/chords/import.ts`. Test new formats against real files.
+- Config formats are described in `src/lib/chords/import.ts` (reading) and `src/lib/chords/v7.ts` (the Twiddler 4 format the editor writes). Test new formats against real files. The editor must write every file in `fixtures/v7/` back byte for byte.
 
 ## Writing
 

@@ -158,6 +158,14 @@ export interface Profile {
   runs: RunRec[];
   /** Learn chords: how well each chord is known, by `chord|output`. */
   chords: Record<string, ChordRec>;
+  /** The Twiddler 4 config open in the config editor, or null. */
+  config: SavedConfig | null;
+}
+
+export interface SavedConfig {
+  name: string;
+  /** The .cfg file, in base64. */
+  data: string;
 }
 
 /** Runs kept in full. Older runs still count in the day, session, lesson and key totals. */
@@ -189,6 +197,7 @@ export function emptyProfile(now = Date.now()): Profile {
     sessions: [],
     runs: [],
     chords: {},
+    config: null,
   };
 }
 
@@ -238,6 +247,7 @@ export function normaliseProfile(raw: unknown): Profile {
     sessions: Array.isArray(raw.sessions) ? (raw.sessions as SessionRec[]) : [],
     runs: Array.isArray(raw.runs) ? (raw.runs as RunRec[]) : [],
     chords: chordsOf(raw.chords),
+    config: isObj(raw.config) && typeof raw.config.data === 'string' ? { name: typeof raw.config.name === 'string' ? raw.config.name : 'Config', data: raw.config.data } : null,
   };
   if (isObj(raw.options)) {
     for (const k of Object.keys(DEFAULT_OPTIONS) as (keyof ExerciseOptions)[]) {

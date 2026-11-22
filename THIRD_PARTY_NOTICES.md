@@ -16,7 +16,7 @@ nevinera/twiddling (MIT), kiwiz/twiddler-ctl, DDRBoxman/twiddler-cfg, edanaher/t
 ## Bundled layouts and test files
 
 - `public/layouts/*.cfg` (TabSpace, MirrorWalk, MirrorWalk without multi-character chords, DelEnt, TeaSan) and `src/lib/chords/fixtures/t3-default-v4.cfg` are from Griatch/twiddler-configs (https://github.com/Griatch/twiddler-configs), BSD 3-Clause licence, below. TabSpace was designed by Brandon Rhodes; DelEnt and TeaSan by Griatch.
-- `src/lib/chords/fixtures/t4-multi-char.cfg` is from nevinera/twiddling (https://github.com/nevinera/twiddling), MIT licence, below.
+- `src/lib/chords/fixtures/t4-multi-char.cfg`, the files in `src/lib/chords/fixtures/v7/`, and the empty config built into `src/lib/chords/v7.ts` are from nevinera/twiddling (https://github.com/nevinera/twiddling), MIT licence, below. The version 7 format in `src/lib/chords/v7.ts` follows its `formats/v7-cfg.md`.
 - `src/lib/chords/fixtures/t3-tuner.csv` is from mimming/binary-counting-twiddler-layout (https://github.com/mimming/binary-counting-twiddler-layout), Apache License 2.0.
 
 ### Griatch/twiddler-configs

@@ -1,5 +1,10 @@
 # Version history
 
+## 0.2.0
+
+- Added a config editor for Twiddler 4 config files (version 7), under Settings, Layout. Open a .cfg from the Tuner, or start from the layout in use, then add, change and delete chords, swap two thumb buttons in every chord, mirror the layout to the other hand, and change the thumb modifiers and device settings. Download the result to copy to the Twiddler. The open config is saved in your progress.
+- Practise with this config makes lessons and drills use the config you're editing.
+
 ## 0.1.5
 
 - Added Learn chords under Practice: one chord at a time with spaced repetition, for word chords, letters, digits or symbols. A word chord only counts when the whole word arrives as one chord, not letter by letter. What you have learnt is saved in your progress.

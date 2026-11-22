@@ -42,6 +42,15 @@ function shift(ch: string): string {
   return SHIFTED[ch] ?? ch.toUpperCase();
 }
 
+/** The HID modifier byte and key that type a character, or null. Shifted characters use Right Shift, as the Tuner writes them. */
+export function keyFor(ch: string): [mod: number, key: number] | null {
+  for (const [k, c] of Object.entries(HID)) {
+    if (c === ch) return [0, Number(k)];
+    if (shift(c) === ch) return [0x20, Number(k)];
+  }
+  return null;
+}
+
 const MOD_SHIFT = 0x02 | 0x20;
 const MOD_OTHER = 0xff & ~MOD_SHIFT;
 

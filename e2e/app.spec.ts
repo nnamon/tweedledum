@@ -150,6 +150,41 @@ test('learn chords counts a word chord only when it comes in one burst', async (
   await expect(page.getByText('Letter by letter: 1')).toBeVisible();
 });
 
+test('config editor builds, swaps, edits and downloads a Twiddler 4 config', async ({ page }) => {
+  await page.goto('./#/settings');
+  await page.getByRole('button', { name: /Config editor/ }).click();
+  await page.getByRole('button', { name: /Start from the layout in use/ }).click();
+  await expect(page.getByText(/Started from Twiddler default/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Swap', exact: true }).click();
+  await expect(page.getByText(/Swapped T1 and T3 in every chord/)).toBeVisible();
+  await page.getByPlaceholder('Search by buttons or action').fill('T3 1R');
+  await expect(page.locator('.list .row').first()).toContainText('1');
+
+  await page.getByPlaceholder('Search by buttons or action').fill('');
+  await page.getByRole('button', { name: 'Add a chord' }).click();
+  await page.getByRole('button', { name: '0L', exact: true }).click();
+  await page.getByLabel('Text the chord types').fill('hello ');
+  await page.locator('.draft').scrollIntoViewIfNeeded();
+  await shot(page, 'editor-chord');
+  await page.getByRole('button', { name: 'Save chord' }).click();
+  await expect(page.getByText('0L = "hello ".')).toBeVisible();
+  await shot(page, 'editor');
+
+  const dl = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Download/ }).click();
+  const file = await dl;
+  expect(file.suggestedFilename()).toBe('Twiddler-default.cfg');
+  const bytes = new Uint8Array(await (await file.createReadStream()).toArray().then((c) => Buffer.concat(c)));
+  expect(bytes[4]).toBe(7);
+
+  await page.getByRole('button', { name: 'Practise with this config' }).click();
+  await expect(page.getByText(/Lessons and drills now use/)).toBeVisible();
+  await page.goto('./#/chords');
+  await page.keyboard.press('1');
+  await expect(page.locator('.explore')).toContainText('C+R000');
+});
+
 test('left hand mirrors the keypad picture and keeps the chords', async ({ page }) => {
   const order = async () => {
     const xs = await page.locator('.pad g.key').evaluateAll((gs) =>
