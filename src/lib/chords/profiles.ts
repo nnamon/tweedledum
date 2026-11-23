@@ -2,12 +2,13 @@
 // what chords type, not from where a particular layout puts them, so a profile applies to the
 // factory layout, to a Tuner download or to a config built from a typing layout.
 
+import { DEFAULT_LAYOUT } from './layout';
 import {
-  BUTTON_BIT, actionLabel, chordLabel, emptyConfig, readSettings, textChord, textOf, writeSettings,
+  BUTTON_BIT, actionLabel, chordLabel, configFromLayout, emptyConfig, keyChord, readSettings, textChord, textOf, writeSettings,
   type Button, type V7Chord, type V7Config,
 } from './v7';
 
-export type ChangeId = 'system' | 'digits' | 'symbols' | 'thumbs' | 'words' | 'terminal';
+export type ChangeId = 'system' | 'nav' | 'digits' | 'symbols' | 'thumbs' | 'words' | 'terminal';
 
 export interface Change {
   id: ChangeId;
@@ -31,6 +32,14 @@ const T4 = bitsOf('T4');
 const THUMB_BITS = T1 | T2 | T3 | T4 | bitsOf('T0');
 /** Thumb buttons the short-thumbs profile moves things off. T4 stays: it holds Shift. */
 const FAR = T1 | T2 | T3;
+
+/** Keys that type nothing, where the factory layout has them: [buttons, HID modifier, HID key]. */
+export const NAV_KEYS: [Button[], number, number][] = [
+  [['2M', '3R'], 0, 0x52], [['2M', '3M'], 0, 0x50], [['2M', '3L'], 0, 0x51], [['2M', '4M'], 0, 0x4f],
+  [['2R', '3R', '4R'], 0, 0x4a], [['2L', '3L', '4L'], 0, 0x4d], [['3R', '4R'], 0, 0x4b], [['3L', '4L'], 0, 0x4e],
+  [['1R', '2R', '3R'], 0, 0x29], [['1R', '2R', '3R', '4R'], 0, 0x39], [['1M', '2M', '3M', '4M'], 0, 0x53],
+  [['1M', '2M', '4M'], 0, 0x2b], [['T4', '1M', '2M', '4M'], 0x02, 0x2b],
+];
 
 /** Digits on the fingers: hold 2L, and rows 3 and 4 pick the digit as on a phone keypad. */
 export const DIGITS: [string, Button[]][] = [
@@ -72,6 +81,10 @@ export const CHANGES: Record<ChangeId, Change> = {
     id: 'system', title: 'Device functions on their usual buttons',
     detail: 'Sleep, Bluetooth, battery and the other device functions go back where the Tuner expects them. The Tuner adds them back there anyway when it saves a config.',
   },
+  nav: {
+    id: 'nav', title: 'Arrows and navigation keys',
+    detail: 'The arrows, Home, End, Page Up, Page Down, Escape, Caps Lock, Num Lock, Tab and Shift Tab, where the factory layout has them. Only keys the config has no chord for are added, so this matters for a config built from a typing layout.',
+  },
   digits: {
     id: 'digits', title: 'Digits on the fingers',
     detail: 'Hold 2L, then rows 3 and 4 pick 1 to 9 as on a phone keypad: 3R 4R is 1, 3L 4L is 9. 2L 4R is 0. Digit chords that use T1, T2 or T3 are removed.',
@@ -99,7 +112,7 @@ export const PROFILES: Profile[] = [
     id: 'short-thumbs',
     title: 'Short thumbs',
     detail: 'For hands that can\'t reach T1 and T2. Everything you type goes on the finger buttons, with T3 as Control and T4 as Shift.',
-    changes: [CHANGES.system, CHANGES.digits, CHANGES.symbols, CHANGES.thumbs, CHANGES.words, CHANGES.terminal],
+    changes: [CHANGES.system, CHANGES.nav, CHANGES.digits, CHANGES.symbols, CHANGES.thumbs, CHANGES.words, CHANGES.terminal],
   },
 ];
 
@@ -169,6 +182,16 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
       if (now) chords = chords.filter((c) => c !== now);
       put({ ...sys });
       report.placed.push(describe(sys));
+    }
+  }
+
+  if (want.has('nav')) {
+    for (const [buttons, mod, key] of NAV_KEYS) {
+      if (chords.some((c) => c.type === 2 && c.hi === mod && c.key === key)) continue;
+      const next = keyChord(bitsOf(...buttons), mod, key);
+      if (at(next.bits)) continue;
+      chords.push(next);
+      report.placed.push(describe(next));
     }
   }
 
@@ -260,4 +283,9 @@ function fingerSpots(): number[] {
     }
   }
   return out.map((b) => b >>> 0);
+}
+
+/** The Short thumbs preset: the Twiddler default layout with the whole profile applied. */
+export function shortThumbsConfig(): V7Config {
+  return applyChanges(configFromLayout(DEFAULT_LAYOUT), PROFILES[0].changes.map((c) => c.id)).cfg;
 }

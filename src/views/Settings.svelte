@@ -10,6 +10,8 @@
   import { sayChars, sayText, speechAvailable, voices } from '../lib/audio/voice';
   import { RUNNING, isNewer, published, updateAndReload, type Published } from '../lib/app/update';
   import { go } from '../lib/app/router.svelte';
+  import { shortThumbsConfig } from '../lib/chords/profiles';
+  import { toBase64, writeV7 } from '../lib/chords/v7';
 
   const s = $derived(store.p.settings);
   const km = $derived(keymap());
@@ -116,6 +118,22 @@
 
   function fail(e: unknown) {
     layoutMsg = { ok: false, text: e instanceof LayoutError ? e.message : 'That layout could not be read. Nothing was changed.' };
+  }
+
+  // Built here from the default layout, so no copy of the factory config ships with the app.
+  function shortThumbs() {
+    const cfg = shortThumbsConfig();
+    return { cfg, data: writeV7(cfg) };
+  }
+
+  function loadShortThumbs() {
+    apply(importLayout(shortThumbs().data, 'short-thumbs.cfg'), 'Short thumbs');
+  }
+
+  function openShortThumbs() {
+    if (store.p.config && !confirm(`Open Short thumbs in the Tuner? It replaces ${store.p.config.name}, which is open there now. Download that first to keep it.`)) return;
+    store.p.config = { name: 'Short-thumbs', data: toBase64(shortThumbs().data) };
+    go('tuner');
   }
 
   async function loadBundled(file: string, name: string) {
@@ -239,11 +257,15 @@
 
     <h3 class="section-head sub-head">Other layouts</h3>
     <div class="group">
+      <div class="row preset">
+        <button class="row-main preset-load" onclick={loadShortThumbs}><span class="row-title link">Short thumbs</span><span class="row-sub">The Twiddler default for hands that can't reach T1 and T2: digits on 2L like a phone keypad, brackets and symbols on 1R and 1M, T3 as Control, T4 as Shift, and 24 word chords for English and the terminal.</span></button>
+        <button class="btn compact" onclick={openShortThumbs}>Open in Tuner</button>
+      </div>
       {#each BUNDLED as b (b.file)}
         <button class="row" onclick={() => loadBundled(b.file, b.name)}><span class="row-main row-title link">{b.name}</span></button>
       {/each}
     </div>
-    <p class="section-foot">Config files from Griatch's twiddler-configs (BSD licence). TabSpace is by Brandon Rhodes; DelEnt, TeaSan and this MirrorWalk config are by Griatch.</p>
+    <p class="section-foot">Short thumbs is the Tuner's Short thumbs profile applied to the Twiddler default. Open it in the Tuner to download it for the Twiddler. The others are config files from Griatch's twiddler-configs (BSD licence). TabSpace is by Brandon Rhodes; DelEnt, TeaSan and this MirrorWalk config are by Griatch.</p>
 
     <h3 class="section-head sub-head">Paste a layout</h3>
     <textarea class="area" rows="4" bind:value={layoutText} placeholder={'"Thumbs","Fingers","Actions"\n"","1R","[KB]a"'} aria-label="Layout as CSV or JSON"></textarea>
@@ -376,5 +398,19 @@
 
   label.row {
     cursor: pointer;
+  }
+
+  .preset {
+    gap: var(--tw-space-3);
+  }
+
+  .preset-load {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0;
+    border: 0;
+    background: none;
+    text-align: left;
   }
 </style>

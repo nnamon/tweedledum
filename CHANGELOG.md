@@ -1,5 +1,10 @@
 # Version history
 
+## 0.3.1
+
+- Added Short thumbs to Settings, Layout, Other layouts: the Twiddler default with the Short thumbs profile applied. Load it to practise on it, or open it in the Tuner to download it for the Twiddler.
+- The Short thumbs profile now adds the arrows, Home, End, Page Up, Page Down and the other navigation keys where the factory layout has them, when a config has no chord for them. A config built from a typing layout used to have none.
+
 ## 0.3.0
 
 - The config editor is now the Tuner, with its own tab.

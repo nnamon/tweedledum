@@ -1,7 +1,7 @@
 {
   "name": "tweedledum",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A typing tutor for the Twiddler one-handed chording keyboard. Lessons, dictation, drills and stats that you can carry between devices as a code or a file.",
   "type": "module",
   "scripts": {

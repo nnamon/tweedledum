@@ -191,7 +191,7 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
   await page.getByRole('button', { name: /Start from the layout in use/ }).first().click();
   await page.getByLabel(/Terminal word chords/).uncheck();
-  await page.getByRole('button', { name: 'Apply 5 changes' }).click();
+  await page.getByRole('button', { name: 'Apply 6 changes' }).click();
   await expect(page.getByText(/Short thumbs: \d+ chords added or moved/)).toBeVisible();
   await page.getByText(/^Added or moved/).click();
   await expect(page.locator('.report')).toContainText('2L 3R 4R = 1');
@@ -204,8 +204,8 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await page.getByPlaceholder('Search by buttons or action').fill('2L 3R 4R');
   await expect(page.locator('.list')).toContainText('No chords match');
 
-  await page.getByRole('button', { name: 'Apply 5 changes' }).click();
-  await page.getByRole('button', { name: 'Apply 5 changes' }).click();
+  await page.getByRole('button', { name: 'Apply 6 changes' }).click();
+  await page.getByRole('button', { name: 'Apply 6 changes' }).click();
   await expect(page.getByText('Short thumbs: nothing to change.', { exact: false })).toBeVisible();
 
   await page.getByRole('button', { name: 'Practise with this config' }).click();
@@ -270,4 +270,22 @@ test('Settings shows the version', async ({ page }) => {
   await expect(page.getByText(/^Tweedledum \d+\.\d+\.\d+$/)).toBeVisible();
   await expect(page.getByText(/This is the newest version\.|is on the site/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Update and reload' })).toBeVisible();
+});
+
+test('the Short thumbs preset loads for practice and opens in the Tuner', async ({ page }) => {
+  await page.goto('./#/settings');
+  await page.getByRole('button', { name: /^Short thumbs/ }).click();
+  await expect(page.getByText(/Loaded Short thumbs/)).toBeVisible();
+  await page.getByRole('button', { name: 'Open in Tuner' }).scrollIntoViewIfNeeded();
+  await shot(page, 'preset');
+  await page.getByRole('button', { name: 'Open in Tuner' }).click();
+  await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
+  await page.getByPlaceholder('Search by buttons or action').fill('grep');
+  await expect(page.locator('.list')).toContainText('1M 2M 3R 4R');
+  const dl = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Download/ }).click();
+  expect((await dl).suggestedFilename()).toBe('Short-thumbs.cfg');
+  await page.goto('./#/chords');
+  await page.keyboard.press('9');
+  await expect(page.locator('.explore')).toContainText('0LLL');
 });

@@ -24,7 +24,7 @@ describe('the short-thumbs profile', () => {
     expect(chordsFor(cfg, '0')).toEqual(['2L 4R']);
     expect(chordsFor(cfg, '[')).toEqual(['1R 3R 4L']);
     expect(chordsFor(cfg, '~')).toEqual(['1M 3R 4L']);
-    expect(chordsFor(cfg, 'for ')).toEqual(['1R 2R 3R 4R']);
+    expect(chordsFor(cfg, 'for ')).toEqual(['1R 2R 3R 4M']);
     for (const w of [...COMMON_WORDS, ...TERMINAL_WORDS]) expect(chordsFor(cfg, w), w).toHaveLength(1);
     expect(report.lost).toEqual([]);
     expect(report.farOnly).toEqual([]);
@@ -63,5 +63,22 @@ describe('the short-thumbs profile', () => {
     // End was on 2L 3L 4L, where 9 goes.
     expect(report.moved).toEqual(['End: 2L 3L 4L to 2L 3M']);
     expect(chordsFor(cfg, '5')).toEqual(['2L 3M 4M']);
+  });
+});
+
+describe('the Short thumbs preset', () => {
+  it('has the navigation keys, every character on the fingers or T4, and all 24 word chords', async () => {
+    const { shortThumbsConfig } = await import('./profiles');
+    const { actionLabel } = await import('./v7');
+    const cfg = shortThumbsConfig();
+    const labels = cfg.chords.map((c) => `${chordLabel(c.bits)} = ${actionLabel(c)}`);
+    for (const l of ['2M 3R = Up', '2M 3M = Left', '2M 3L = Down', '2M 4M = Right', '2R 3R 4R = Home', '3R 4R = Page Up', '3L 4L = Page Down']) expect(labels).toContain(l);
+    // End was on 2L 3L 4L, where 9 goes, and moved out of the way.
+    expect(labels.filter((l) => l.endsWith('= End'))).toHaveLength(1);
+    expect(chordsFor(cfg, '9')).toEqual(['2L 3L 4L']);
+    for (const w of [...COMMON_WORDS, ...TERMINAL_WORDS]) expect(chordsFor(cfg, w), w).toHaveLength(1);
+    expect(cfg.chords.filter((c) => c.type !== 1 && (c.bits & (T1 | T2 | T3)) !== 0)).toEqual([]);
+    const bits = cfg.chords.map((c) => c.bits);
+    expect(new Set(bits).size).toBe(bits.length);
   });
 });
