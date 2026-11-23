@@ -1,6 +1,6 @@
 // Screens live in the URL hash, so the browser's back button works and a reload stays put.
 
-export type Tab = 'practice' | 'lessons' | 'chords' | 'stats' | 'settings';
+export type Tab = 'practice' | 'lessons' | 'chords' | 'tuner' | 'stats' | 'settings';
 
 function parse(): string[] {
   const h = location.hash.replace(/^#\/?/, '');

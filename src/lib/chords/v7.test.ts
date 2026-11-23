@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { importLayout } from './import';
 import { Keymap } from './layout';
 import {
-  actionLabel, chordLabel, mirror, parseV7, readSettings, swapThumbs, textChord, textOf, writeSettings, writeV7,
+  actionLabel, chordLabel, mirror, parseV7, readSettings, stringTableSize, swapThumbs, textChord, textOf, writeSettings, writeV7,
 } from './v7';
 
 const dir = new URL('./fixtures/v7/', import.meta.url);
@@ -26,6 +26,17 @@ describe('version 7 config files', () => {
   const local = ['../local/t4-default.cfg', '../local/t4-tuner-t3num.cfg'].filter((f) => existsSync(new URL(f, dir)));
   it.skipIf(local.length === 0)('writes the factory file and a Tuner download back byte for byte', () => {
     for (const f of local) expect(writeV7(parseV7(read(f))), f).toEqual(expected(read(f)));
+  });
+
+  // Uploaded to the Tuner, saved there and downloaded on 23 November 2026. It is mostly the factory
+  // layout, so it stays out of the repository with the other local files.
+  const long = new URL('../local/tuner-long-strings.cfg', dir);
+  it.skipIf(!existsSync(long))('reads and writes a Tuner file whose strings run past byte 255', () => {
+    const f = new Uint8Array(readFileSync(long));
+    const cfg = parseV7(f);
+    expect(stringTableSize(cfg)).toBe(508);
+    expect(textOf(cfg.chords.find((c) => chordLabel(c.bits) === '1R 2R 3L 4L')!)).toBe('not ');
+    expect(writeV7(cfg)).toEqual(expected(f));
   });
 
   it('reads each setting the test files change', () => {

@@ -233,7 +233,7 @@
       {/if}
       <label class="row"><span class="row-main row-title link">Load a layout file</span><span class="row-sub">.cfg, .csv or .json</span><input type="file" accept=".cfg,.csv,.json,.txt" class="visually-hidden" onchange={loadLayoutFile} /></label>
       <button class="row" onclick={() => download(`${km.layout.name.replace(/[^\w-]+/g, '-')}.json`, exportLayoutJson(km.layout))}><span class="row-main row-title link">Save this layout as JSON</span></button>
-      <button class="row" onclick={() => go('editor')}><span class="row-main"><span class="row-title link">Config editor</span><span class="row-sub">Edit a Twiddler 4 config: chords, thumb buttons and settings{store.p.config ? `. Open: ${store.p.config.name}` : ''}.</span></span><span class="row-chevron"><Icon name="chevron" size={13} /></span></button>
+      <button class="row" onclick={() => go('tuner')}><span class="row-main"><span class="row-title link">Tuner</span><span class="row-sub">Edit a Twiddler 4 config: chords, thumb buttons, settings and profiles{store.p.config ? `. Open: ${store.p.config.name}` : ''}.</span></span><span class="row-chevron"><Icon name="chevron" size={13} /></span></button>
     </div>
     <p class="section-foot">Reads Twiddler config files (version 4 for Twiddler 2, 5 for Twiddler 3, 7 for Twiddler 4), CSV exported from the Twiddler Tuner, and the Typing Tutor's JSON key map. Only chords that type text are used. The lessons were written for the default layout.</p>
 

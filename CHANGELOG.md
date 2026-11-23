@@ -1,5 +1,12 @@
 # Version history
 
+## 0.3.0
+
+- The config editor is now the Tuner, with its own tab.
+- Added the Short thumbs profile, for hands that can't reach T1 and T2. It moves digits, brackets and symbols onto the finger buttons, makes T3 hold Control and T4 hold Shift, and adds 14 common word chords and 10 terminal ones. Choose which parts to apply. The Tuner lists what changed and warns about anything you can no longer type. You can also start a new config from the layout in use with the profile applied.
+- Undo takes back the last profile, thumb swap or mirror.
+- Removed the warning about multi-character strings longer than 255 bytes. Tek Gear's Tuner reads and writes configs with longer strings.
+
 ## 0.2.0
 
 - Added a config editor for Twiddler 4 config files (version 7), under Settings, Layout. Open a .cfg from the Tuner, or start from the layout in use, then add, change and delete chords, swap two thumb buttons in every chord, mirror the layout to the other hand, and change the thumb modifiers and device settings. Download the result to copy to the Twiddler. The open config is saved in your progress.

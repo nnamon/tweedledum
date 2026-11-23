@@ -16,7 +16,8 @@
 //   0x80      chords, 8 bytes each, sorted by bitmask: u32 bitmask, u8 type, then
 //             type 1 (device function): u8 function code
 //             type 2 (key): u8 HID modifier byte, u16 HID key
-//             type 7 (string): u16 offset into the string table
+//             type 7 (string): u16 offset into the string table, at bytes 5 and 6;
+//             the Tuner writes offsets past 255 there too
 //   then      the string table: (u16 modifier type, u16 key) pairs, each string ended by 0, 0
 //
 // Bitmask: bit 0 T1, 1 to 3 row 1 R M L, 4 T2, 5 to 7 row 2, 8 T3, 9 to 11 row 3, 12 T4, 13 to 15
@@ -110,7 +111,7 @@ export function writeV7(cfg: V7Config): Uint8Array {
   return out;
 }
 
-/** Bytes in the string table. Offsets past 255 have not been seen in a Tuner file. */
+/** Bytes in the string table. */
 export function stringTableSize(cfg: V7Config): number {
   return cfg.chords.filter((c) => c.type === 7).reduce((n, c) => n + 4 * (c.keys.length + 1), 0);
 }

@@ -18,13 +18,14 @@
     { id: 'practice', title: 'Practice', icon: 'keyboard' },
     { id: 'lessons', title: 'Lessons', icon: 'book' },
     { id: 'chords', title: 'Chords', icon: 'grid' },
+    { id: 'tuner', title: 'Tuner', icon: 'sliders' },
     { id: 'stats', title: 'Stats', icon: 'chart' },
     { id: 'settings', title: 'Settings', icon: 'gear' },
   ];
 
   const page = $derived(route.path[0]);
   const training = $derived(page === 'train' || page === 'learn');
-  const tab = $derived<Tab>(page === 'setup' ? 'practice' : page === 'editor' ? 'settings' : (TABS.find((t) => t.id === page)?.id ?? 'practice'));
+  const tab = $derived<Tab>(page === 'setup' ? 'practice' : page === 'editor' ? 'tuner' : (TABS.find((t) => t.id === page)?.id ?? 'practice'));
 
   // The run screen needs an exercise; after a reload there is none, so go back to Practice.
   $effect(() => {
@@ -74,7 +75,7 @@
       {#if current.ex}<Train />{/if}
     {:else if page === 'setup' && setupKind && EXERCISES[setupKind]}
       {#key setupKind}<Setup kind={setupKind} />{/key}
-    {:else if page === 'editor'}
+    {:else if page === 'editor' || page === 'tuner'}
       <Editor />
     {:else if tab === 'lessons'}
       <Lessons />

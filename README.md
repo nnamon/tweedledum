@@ -33,11 +33,13 @@ The default layout is the one the Twiddler 3 and 4 ship with, which is also the 
 
 TabSpace, MirrorWalk, DelEnt and TeaSan are built in. Tweedledum keeps only the chords that type text, so shortcuts, mouse actions and chords with two buttons in one row are dropped. The lessons introduce letters in an order chosen for the default layout, and on another layout that order won't follow your chords.
 
-## Config editor
+## Tuner
 
-Settings, Layout, Config editor edits Twiddler 4 config files (version 7) in the browser. Open a .cfg downloaded from the Tuner, or start from the layout in use. You can add, change and delete chords, including multi-character ones and keys with modifiers. You can swap two thumb buttons in every chord at once, or mirror a layout to the other hand. You can also set what each thumb button holds, what the small buttons do when pressed alone, and the device settings: button mode, key repeat, haptics, sleep time and the touchpad. Download the result and copy it to the Twiddler. Device functions such as Sleep and Clear Bluetooth stay on their buttons, as the Tuner keeps them.
+The Tuner tab edits Twiddler 4 config files (version 7) in the browser. Open a .cfg downloaded from Tek Gear's Tuner, or start from the layout in use. You can add, change and delete chords, including multi-character ones and keys with modifiers. You can swap two thumb buttons in every chord at once, or mirror a layout to the other hand. You can also set what each thumb button holds, what the small buttons do when pressed alone, and the device settings: button mode, key repeat, haptics, sleep time and the touchpad. Download the result and copy it to the Twiddler. Device functions such as Sleep and Clear Bluetooth stay on their buttons, as the Tuner keeps them.
 
-Every file the editor has been tested against comes back byte for byte when opened and saved: the 18 test files from nevinera/twiddling, the factory file and a Tuner download. The format follows nevinera/twiddling's description of it, since Tek Gear hasn't published one for version 7.
+The Short thumbs profile is for hands that can't reach T1 and T2. It puts digits on 2L with rows 3 and 4 laid out like a phone keypad, and brackets and the symbols that needed a far thumb on 1R and 1M. T3 holds Control and T4 holds Shift. It adds word chords for the 14 words that save the most typing in English web text, by Peter Norvig's word counts, and, if you choose, 10 terminal words. Each part can be left out. The profile reports what it added, moved and removed, and anything you can no longer type. Undo takes it back.
+
+Every file the editor has been tested against comes back byte for byte when opened and saved: the 18 test files from nevinera/twiddling, the factory file and two Tuner downloads, one with more than 255 bytes of multi-character strings. The factory file and the Tuner downloads stay out of the repository. The format follows nevinera/twiddling's description of it, since Tek Gear hasn't published one for version 7.
 
 ## Moving your progress
 

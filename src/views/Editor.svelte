@@ -1,15 +1,15 @@
 <script lang="ts">
   import Icon from '../ui/Icon.svelte';
   import Segmented from '../ui/Segmented.svelte';
-  import { back } from '../lib/app/router.svelte';
   import { chordText } from '../lib/chords/chord';
   import { importLayout } from '../lib/chords/import';
   import { keymap, store } from '../lib/state/app.svelte';
   import {
     ConfigError, DEDICATED, KEY_NAMES, THUMB_MODIFIERS, THUMB_NAMES, actionLabel, chordLabel, configFromLayout, fromBase64,
-    has, keyChord, mirror, parseV7, readSettings, stringTableSize, swapThumbs, textChord, textOf, toBase64, toggle, writeSettings, writeV7,
+    has, keyChord, mirror, parseV7, readSettings, swapThumbs, textChord, textOf, toBase64, toggle, writeSettings, writeV7,
     type Button, type V7Chord, type V7Config, type V7Settings,
   } from '../lib/chords/v7';
+  import { PROFILES, applyChanges, type ChangeId, type Report } from '../lib/chords/profiles';
 
   const settings = $derived(store.p.settings);
 
@@ -95,6 +95,8 @@
     cfg = null;
     store.p.config = null;
     message = null;
+    undo = null;
+    report = null;
   }
 
   function rename(e: Event) {
@@ -116,15 +118,61 @@
   function doSwap() {
     if (!cfg || swapA === swapB) return;
     const r = swapThumbs(cfg, swapA, swapB);
-    commit(r.cfg);
+    bulk(r.cfg, `the swap of ${swapA} and ${swapB}`);
     message = { text: `Swapped ${swapA} and ${swapB} in every chord and in the thumb modifiers.${clashNote(r.clashes)}`, ok: r.clashes.length === 0 };
   }
 
   function doMirror() {
     if (!cfg) return;
     const r = mirror(cfg);
-    commit(r.cfg);
+    bulk(r.cfg, 'the mirror');
     message = { text: `Swapped the L and R columns in every chord.${clashNote(r.clashes)}`, ok: r.clashes.length === 0 };
+  }
+
+  // ---- Undo, for changes to many chords at once ----
+
+  let undo = $state<{ cfg: V7Config; what: string } | null>(null);
+
+  function bulk(next: V7Config, what: string) {
+    if (cfg) undo = { cfg, what };
+    commit(next);
+  }
+
+  function doUndo() {
+    if (!undo) return;
+    commit(undo.cfg);
+    message = { text: `Undid ${undo.what}.`, ok: true };
+    undo = null;
+    report = null;
+  }
+
+  // ---- Profiles ----
+
+  const profile = PROFILES[0];
+  let chosen = $state<ChangeId[]>(profile.changes.map((c) => c.id));
+  let report = $state<Report | null>(null);
+
+  function applyProfile() {
+    if (!cfg || chosen.length === 0) return;
+    const r = applyChanges(cfg, chosen);
+    bulk(r.cfg, `the ${profile.title} profile`);
+    report = r.report;
+    const n = r.report.placed.length + r.report.removed.length + r.report.moved.length;
+    message = n === 0
+      ? { text: `${profile.title}: nothing to change. The config already has everything chosen.`, ok: true }
+      : { text: `${profile.title}: ${r.report.placed.length} chords added or moved, ${r.report.removed.length} removed, ${r.report.moved.length} moved out of the way.`, ok: r.report.lost.length === 0 };
+  }
+
+  function startWithProfile() {
+    fromLayout();
+    applyProfile();
+    undo = null;
+    name = `${name}-short-thumbs`;
+    if (cfg) commit(cfg);
+  }
+
+  function pick(id: ChangeId, on: boolean) {
+    chosen = on ? [...chosen, id] : chosen.filter((c) => c !== id);
   }
 
   // ---- Settings ----
@@ -216,23 +264,27 @@
   const mirrored = $derived((settings.view === 'back') !== (settings.hand === 'left'));
   const cols = $derived<('L' | 'M' | 'R')[]>(mirrored ? ['L', 'M', 'R'] : ['R', 'M', 'L']);
   const PAD_THUMBS: Button[] = ['T0', 'T1', 'T2', 'T3', 'T4'];
-  const big = $derived(cfg ? stringTableSize(cfg) > 255 : false);
 </script>
 
 <div class="screen wide">
-  <button class="text-button backlink" onclick={() => back(['settings'])}><Icon name="back" size={20} /> Back</button>
-  <h1 class="large-title">Config editor</h1>
+  <h1 class="large-title">Tuner</h1>
   <p class="lede">
-    Edit a Twiddler 4 config file (version 7): its chords, thumb buttons and settings. The file stays in this browser and in your progress. Download it when you're done and copy it to the Twiddler.
+    Edit a Twiddler 4 config file (version 7): its chords, thumb buttons and settings, or apply a profile that changes many chords at once. The file stays in this browser and in your progress. Download it when you're done and copy it to the Twiddler.
   </p>
 
-  {#if message}<p class="notice" class:bad={!message.ok} role="status">{message.text}</p>{/if}
+  {#if message}
+    <p class="notice" class:bad={!message.ok} role="status">
+      {message.text}
+      {#if undo}<button class="text-button undo" onclick={doUndo}>Undo</button>{/if}
+    </p>
+  {/if}
 
   {#if !cfg || !s}
     <section class="section">
       <div class="group">
         <label class="row"><span class="row-main"><span class="row-title link">Open a config file</span><span class="row-sub">A .cfg for the Twiddler 4, such as one downloaded from the Tuner.</span></span><input type="file" accept=".cfg" class="visually-hidden" onchange={openFile} /></label>
         <button class="row" onclick={fromLayout}><span class="row-main"><span class="row-title link">Start from the layout in use</span><span class="row-sub">{keymap().layout.name}, with the Tuner's default settings and system chords. Shortcuts, arrows and function keys aren't part of a typing layout, so they aren't included.</span></span></button>
+        <button class="row" onclick={startWithProfile}><span class="row-main"><span class="row-title link">Start from the layout in use, for short thumbs</span><span class="row-sub">The same, with the {profile.title} profile applied: everything you type on the finger buttons, T3 as Control and T4 as Shift.</span></span></button>
       </div>
     </section>
   {:else}
@@ -246,7 +298,35 @@
         <button class="btn" onclick={practise}>Practise with this config</button>
         <button class="btn danger" onclick={close}>Close</button>
       </div>
-      {#if big}<p class="notice warn">The strings of the multi-character chords take more than 255 bytes. No Tuner file has been seen that large, so the Twiddler may not read the later ones.</p>{/if}
+    </section>
+
+    <section class="section">
+      <h2 class="section-head">Profile: {profile.title}</h2>
+      <p class="section-intro">{profile.detail}</p>
+      <div class="group">
+        {#each profile.changes as c (c.id)}
+          <label class="row change">
+            <input type="checkbox" checked={chosen.includes(c.id)} onchange={(e) => pick(c.id, e.currentTarget.checked)} />
+            <span class="row-main"><span class="row-title">{c.title}</span><span class="row-sub">{c.detail}</span></span>
+          </label>
+        {/each}
+      </div>
+      <div class="btn-row"><button class="btn primary" onclick={applyProfile} disabled={chosen.length === 0}>Apply {chosen.length} {chosen.length === 1 ? 'change' : 'changes'}</button></div>
+      {#if report}
+        <div class="report" aria-label="What the profile changed">
+          {#if report.lost.length}<p class="notice bad">No chord types these any more: {report.lost.join(' ')}</p>{/if}
+          {#if report.farOnly.length}<p class="notice warn">Only chords with T1 or T2 type these: {report.farOnly.join(' ')}</p>{/if}
+          {#each [['Added or moved', report.placed], ['Moved out of the way', report.moved], ['Removed', report.removed]] as [head, list] (head)}
+            {#if list.length}
+              <details>
+                <summary>{head} ({list.length})</summary>
+                <ul class="mono">{#each list as line (line)}<li>{line}</li>{/each}</ul>
+              </details>
+            {/if}
+          {/each}
+        </div>
+      {/if}
+      <p class="section-foot">The word chords come from Peter Norvig's word counts for English web text: the words that save the most chords for each chord learnt. The terminal words are a guess. Practise with this config, then Learn chords, to learn the new ones.</p>
     </section>
 
     <section class="section">
@@ -376,9 +456,45 @@
 </div>
 
 <style>
-  .backlink {
-    gap: var(--tw-space-1);
+  .undo {
+    margin-left: var(--tw-space-2);
+  }
+
+  .section-intro {
     margin-bottom: var(--tw-space-2);
+    color: var(--tw-label2);
+  }
+
+  .change {
+    align-items: flex-start;
+    gap: var(--tw-space-3);
+  }
+
+  .change input {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-top: var(--tw-space-1);
+  }
+
+  .report {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tw-space-2);
+    margin-top: var(--tw-space-3);
+  }
+
+  .report summary {
+    min-height: var(--tw-tap);
+    padding: var(--tw-space-3) 0;
+    cursor: pointer;
+    font-weight: var(--tw-weight-semibold);
+  }
+
+  .report ul {
+    padding-left: var(--tw-space-4);
+    font-size: var(--tw-text-sub);
+    color: var(--tw-label2);
   }
 
   .tools {

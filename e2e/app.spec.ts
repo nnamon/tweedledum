@@ -150,10 +150,10 @@ test('learn chords counts a word chord only when it comes in one burst', async (
   await expect(page.getByText('Letter by letter: 1')).toBeVisible();
 });
 
-test('config editor builds, swaps, edits and downloads a Twiddler 4 config', async ({ page }) => {
+test('the Tuner builds, swaps, edits and downloads a Twiddler 4 config', async ({ page }) => {
   await page.goto('./#/settings');
-  await page.getByRole('button', { name: /Config editor/ }).click();
-  await page.getByRole('button', { name: /Start from the layout in use/ }).click();
+  await page.getByRole('button', { name: /^Tuner/ }).click();
+  await page.getByRole('button', { name: /Start from the layout in use/ }).first().click();
   await expect(page.getByText(/Started from Twiddler default/)).toBeVisible();
 
   await page.getByRole('button', { name: 'Swap', exact: true }).click();
@@ -183,6 +183,35 @@ test('config editor builds, swaps, edits and downloads a Twiddler 4 config', asy
   await page.goto('./#/chords');
   await page.keyboard.press('1');
   await expect(page.locator('.explore')).toContainText('C+R000');
+});
+
+test('the Tuner applies the short-thumbs profile and can undo it', async ({ page }) => {
+  await page.goto('./#/practice');
+  await page.getByRole('link', { name: 'Tuner' }).first().click();
+  await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
+  await page.getByRole('button', { name: /Start from the layout in use/ }).first().click();
+  await page.getByLabel(/Terminal word chords/).uncheck();
+  await page.getByRole('button', { name: 'Apply 5 changes' }).click();
+  await expect(page.getByText(/Short thumbs: \d+ chords added or moved/)).toBeVisible();
+  await page.getByText(/^Added or moved/).click();
+  await expect(page.locator('.report')).toContainText('2L 3R 4R = 1');
+  await expect(page.locator('.report')).toContainText('"for "');
+  await expect(page.locator('.report')).not.toContainText('"git "');
+  await shot(page, 'tuner-profile');
+
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByText('Undid the Short thumbs profile.')).toBeVisible();
+  await page.getByPlaceholder('Search by buttons or action').fill('2L 3R 4R');
+  await expect(page.locator('.list')).toContainText('No chords match');
+
+  await page.getByRole('button', { name: 'Apply 5 changes' }).click();
+  await page.getByRole('button', { name: 'Apply 5 changes' }).click();
+  await expect(page.getByText('Short thumbs: nothing to change.', { exact: false })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Practise with this config' }).click();
+  await page.goto('./#/chords');
+  await page.keyboard.press('1');
+  await expect(page.locator('.explore')).toContainText('0LRR');
 });
 
 test('left hand mirrors the keypad picture and keeps the chords', async ({ page }) => {

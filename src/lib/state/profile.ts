@@ -158,7 +158,7 @@ export interface Profile {
   runs: RunRec[];
   /** Learn chords: how well each chord is known, by `chord|output`. */
   chords: Record<string, ChordRec>;
-  /** The Twiddler 4 config open in the config editor, or null. */
+  /** The Twiddler 4 config open in the Tuner, or null. */
   config: SavedConfig | null;
 }
 
