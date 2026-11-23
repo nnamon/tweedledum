@@ -1,5 +1,11 @@
 # Version history
 
+## 0.3.4
+
+- The Chords page sorts multi-character chords alphabetically, with "the" just before "The"; they were in button order.
+- Word chords and other strings such as " && " and "../" are listed separately.
+- Spaces in multi-character chords are drawn as a faint ␣, and picking one says where its spaces fall, so you know whether to press space after it.
+
 ## 0.3.3
 
 - The Tuner page is one list of grouped rows, as in Settings: practice layout first, then the config file. The Edit button on every layout is gone; with no file open, "Start from" builds one from the practice layout.

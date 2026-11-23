@@ -294,3 +294,20 @@ test('the Short thumbs preset loads for practice and opens in the editor', async
   await page.keyboard.press('9');
   await expect(page.locator('.explore')).toContainText('0LLL');
 });
+
+test('the Chords page sorts multi-character chords and shows their spaces', async ({ page }) => {
+  await page.goto('./#/tuner');
+  await page.getByRole('radio', { name: /^Short thumbs/ }).click();
+  await page.goto('./#/chords');
+  const words = page.locator('.list-section', { has: page.getByRole('heading', { name: 'Words and word parts' }) });
+  const other = page.locator('.list-section', { has: page.getByRole('heading', { name: 'Other multi-character chords' }) });
+  await expect(words.locator('.chip').first()).toContainText('about␣');
+  await expect(other).toContainText('␣&&␣');
+  await expect(words).not.toContainText('&&');
+  await words.getByRole('button', { name: /^for/ }).click();
+  await expect(page.locator('.explore')).toContainText('Ends with a space');
+  await other.getByRole('button', { name: /&&/ }).click();
+  await expect(page.locator('.explore')).toContainText('With a space before and after');
+  await other.scrollIntoViewIfNeeded();
+  await shot(page, 'chords-multi');
+});

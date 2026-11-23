@@ -28,22 +28,44 @@
     const letters = singles.filter((e) => /[a-z]/.test(e.output)).sort((a, b) => a.output.localeCompare(b.output));
     const digits = singles.filter((e) => /[0-9]/.test(e.output)).sort((a, b) => a.output.localeCompare(b.output));
     const other = singles.filter((e) => !/[a-z0-9]/.test(e.output));
-    const multi = km.layout.entries.filter((e) => e.output.length > 1);
+    const multi = km.layout.entries.filter((e) => e.output.length > 1).sort((a, b) => byText(a.output, b.output));
+    const isWord = (t: string) => /^[A-Za-z']+ ?$/.test(t);
+    const words = multi.filter((e) => isWord(e.output));
+    const strings = multi.filter((e) => !isWord(e.output));
     return [
       { head: 'Letters', items: letters, foot: 'Capitals: hold SHIFT with the letter chord.' },
       { head: 'Digits', items: digits, foot: '' },
       { head: 'Space and punctuation', items: other, foot: '' },
-      { head: 'Multi-character chords', items: multi, foot: 'One chord types the whole string.' },
+      { head: 'Words and word parts', items: words, foot: strings.length ? '' : 'One chord types the whole string, spaces included. ␣ marks a space.' },
+      { head: 'Other multi-character chords', items: strings, foot: 'One chord types the whole string, spaces included. ␣ marks a space.' },
     ].filter((g) => g.items.length);
   });
 
-  function show(s: string): string {
-    if (s === ' ') return 'space';
-    return s.replaceAll(' ', '␣');
+  /** Alphabetical, ignoring leading spaces and case, with "the " just before "The ". */
+  function byText(a: string, b: string): number {
+    return a.trimStart().localeCompare(b.trimStart(), 'en', { sensitivity: 'base' }) || (a < b ? 1 : a > b ? -1 : 0);
+  }
+
+  /** The text split at spaces, so each space can be drawn as a faint ␣. */
+  function parts(s: string): { text: string; space: boolean }[] {
+    if (s === ' ') return [{ text: 'space', space: false }];
+    return s.split(/( )/).filter(Boolean).map((t) => ({ text: t === ' ' ? '␣' : t, space: t === ' ' }));
+  }
+
+  /** Where a multi-character chord's spaces fall, so you know whether to press space yourself. */
+  function spaceNote(s: string): string {
+    const before = s.startsWith(' ');
+    const after = s.endsWith(' ');
+    if (before && after) return 'With a space before and after';
+    if (after) return 'Ends with a space';
+    if (before) return 'Starts with a space';
+    return 'No space after';
   }
 </script>
 
 <svelte:window onkeydown={onKey} />
+
+{#snippet text(s: string)}{#each parts(s) as p, i (i)}{#if p.space}<span class="sp" aria-label="space">{p.text}</span>{:else}{p.text}{/if}{/each}{/snippet}
 
 <div class="screen wide">
   <h1 class="large-title">Chords</h1>
@@ -53,9 +75,9 @@
     <div class="pad-col">
       <div class="explore group" aria-live="polite">
         {#if selected}
-          <span class="out mono">{show(selected.out)}</span>
+          <span class="out mono" class:multi={selected.out.length > 1}>{@render text(selected.out)}</span>
           <span class="desc">
-            {charName(selected.out) !== selected.out ? charName(selected.out) : ''}
+            {#if selected.out.length > 1}{spaceNote(selected.out)}{:else if charName(selected.out) !== selected.out}{charName(selected.out)}{/if}
             {#if selected.chord}
               <span class="mono chord">{formatChord(selected.chord, settings.notation)}</span>
             {:else}
@@ -81,7 +103,7 @@
                 class:on={selected?.out === e.output && !selected.pressed}
                 onclick={() => (selected = { out: e.output, chord: e.chord, pressed: false })}
               >
-                <span class="c-out mono">{show(e.output)}</span>
+                <span class="c-out mono">{@render text(e.output)}</span>
                 <span class="c-chord mono">{formatChord(e.chord, settings.notation)}</span>
               </button>
             {/each}
@@ -120,8 +142,24 @@
   }
 
   .out {
+    min-width: 0;
     font-size: var(--tw-text-large-title);
     font-weight: var(--tw-weight-bold);
+    overflow-wrap: anywhere;
+  }
+
+  .out.multi {
+    font-size: var(--tw-text-title);
+  }
+
+  .sp {
+    font-weight: var(--tw-weight-regular);
+    color: var(--tw-label3);
+  }
+
+  .chip.on .sp {
+    color: var(--tw-on-fill);
+    opacity: 0.6;
   }
 
   .desc {
@@ -176,6 +214,8 @@
   }
 
   .c-out {
+    max-width: 100%;
+    overflow-wrap: anywhere;
     font-size: var(--tw-text-body);
     font-weight: var(--tw-weight-semibold);
   }
