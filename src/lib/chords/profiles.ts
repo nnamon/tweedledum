@@ -114,7 +114,7 @@ export const PROFILES: Profile[] = [
     detail:
       "For hands that can't reach T1 and T2. Digit and symbol chords that use T1, T2 or T3 move to the fingers. " +
       "The word chords go on 1R and 1M with row 2, and each types its word and a space. They are the words that save the most typing in Peter Norvig's counts of English web text. " +
-      'To learn the new chords, press Practise on this config, then open Learn chords.',
+      'Applying it changes what you practise on too, so Learn chords picks up the new ones.',
     changes: [CHANGES.system, CHANGES.nav, CHANGES.digits, CHANGES.symbols, CHANGES.thumbs, CHANGES.words, CHANGES.terminal],
   },
 ];

@@ -117,7 +117,8 @@ test('a Tuner config file loads and moves with the progress code', async ({ page
 
   await page.goto('./#/tuner');
   await page.locator('input[type=file][accept*=".csv"]').setInputFiles({ name: 'T3Num.cfg', mimeType: 'application/octet-stream', buffer: cfg });
-  await expect(page.getByText(/Now practising on T3Num.*version 7/)).toBeVisible();
+  await expect(page.getByText('Opened T3Num.cfg: 2 chords.')).toBeVisible();
+  await expect(page.getByLabel('Config name')).toHaveValue('T3Num');
   await expect(page.getByRole('radio', { name: /^T3Num/ })).toHaveAttribute('aria-checked', 'true');
   await page.goto('./#/settings');
   await page.getByRole('button', { name: /Copy progress code/ }).click();
@@ -158,8 +159,7 @@ test('learn chords counts a word chord only when it comes in one burst', async (
 
 test('the Tuner builds, swaps, edits and downloads a Twiddler 4 config', async ({ page }) => {
   await page.goto('./#/tuner');
-  await page.getByRole('button', { name: /^Start from Twiddler default/ }).click();
-  await expect(page.getByText(/Started from Twiddler default: \d+ chords/)).toBeVisible();
+  await expect(page.getByLabel('Config name')).toHaveValue('Twiddler default');
 
   await page.getByRole('button', { name: 'Swap', exact: true }).click();
   await expect(page.getByText(/Swapped T1 and T3 in every chord/)).toBeVisible();
@@ -183,8 +183,7 @@ test('the Tuner builds, swaps, edits and downloads a Twiddler 4 config', async (
   const bytes = new Uint8Array(await (await file.createReadStream()).toArray().then((c) => Buffer.concat(c)));
   expect(bytes[4]).toBe(7);
 
-  await page.getByRole('button', { name: 'Practise on this config' }).click();
-  await expect(page.getByText(/Lessons and drills now use/)).toBeVisible();
+  // Edits change what you practise on, with no extra step.
   await page.goto('./#/chords');
   await page.keyboard.press('1');
   await expect(page.locator('.explore')).toContainText('C+R000');
@@ -194,7 +193,6 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await page.goto('./#/practice');
   await page.getByRole('link', { name: 'Tuner' }).first().click();
   await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
-  await page.getByRole('button', { name: /^Start from Twiddler default/ }).click();
   await page.getByLabel(/Terminal word chords/).uncheck();
   await page.getByRole('button', { name: 'Apply 6 changes' }).click();
   await expect(page.getByText(/Short thumbs: \d+ chords added or moved/)).toBeVisible();
@@ -213,7 +211,6 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await page.getByRole('button', { name: 'Apply 6 changes' }).click();
   await expect(page.getByText('Short thumbs: nothing to change.', { exact: false })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Practise on this config' }).click();
   await page.goto('./#/chords');
   await page.keyboard.press('1');
   await expect(page.locator('.explore')).toContainText('0LRR');
@@ -281,8 +278,7 @@ test('the Short thumbs preset loads for practice and opens in the editor', async
   await page.goto('./#/tuner');
   await page.getByRole('radio', { name: /^Short thumbs/ }).click();
   await expect(page.getByRole('radio', { name: /^Short thumbs/ })).toHaveAttribute('aria-checked', 'true');
-  await page.getByRole('button', { name: /^Start from Short thumbs/ }).click();
-  await expect(page.getByText(/Started from Short thumbs/)).toBeVisible();
+  await expect(page.getByText(/Switched to Short thumbs: 128 chords/)).toBeVisible();
   await shot(page, 'preset');
   await page.getByPlaceholder('Search by buttons or action').fill('grep');
   await expect(page.locator('.list')).toContainText('1M 2M 3R 4R');
@@ -312,24 +308,53 @@ test('the Chords page sorts multi-character chords and shows their spaces', asyn
   await shot(page, 'chords-multi');
 });
 
-test('a config left open is replaced when the practice layout changes', async ({ page }) => {
-  // A config from another layout stays open in the progress. Ticking Short thumbs used to leave it
-  // there, and Download gave the old file.
-  page.on('dialog', (d) => d.accept());
+test('ticking a layout makes it the config file', async ({ page }) => {
+  // Ticking Short thumbs used to change only the practice layout, so Download gave whatever config
+  // was open before.
   await page.goto('./#/tuner');
-  await page.getByRole('button', { name: /^Start from Twiddler default/ }).click();
   await page.getByRole('radio', { name: /^Short thumbs/ }).click();
-  await expect(page.getByRole('button', { name: /Download 1\.cfg Twiddler default/ })).toBeVisible();
-  await page.getByRole('button', { name: /^Replace with Short thumbs/ }).click();
-  await expect(page.getByText(/Started from Short thumbs/)).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Replace with/ })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 128 chords/ })).toBeVisible();
+  await expect(page.getByLabel('Config name')).toHaveValue('Short thumbs');
   const dl = page.waitForEvent('download');
-  await page.getByRole('button', { name: /Download 1\.cfg/ }).click();
+  await page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 128 chords/ }).click();
   const bytes = Buffer.concat(await (await (await dl).createReadStream()).toArray());
   // 1 on 2L 3R 4R (bitmask 0x2280, a key chord for HID 0x1e), and nothing on T1 1R.
   const chords = new Map<number, number>();
   for (let o = 128; o + 8 <= 128 + 8 * bytes.readUInt16LE(8); o += 8) chords.set(bytes.readUInt32LE(o), bytes.readUInt16LE(o + 6));
   expect(chords.get(0x2280)).toBe(0x1e);
   expect(chords.has(0x0003)).toBe(false);
+});
+
+test('switching layouts asks before replacing changes, and Undo brings them back', async ({ page }) => {
+  await page.goto('./#/tuner');
+  await page.getByRole('button', { name: 'Mirror', exact: true }).click();
+  await expect(page.getByRole('radio', { name: /^Twiddler default.*edited/ })).toBeVisible();
+  page.once('dialog', (d) => d.dismiss());
+  await page.getByRole('radio', { name: /^TabSpace/ }).click();
+  await expect(page.getByLabel('Config name')).toHaveValue('Twiddler default');
+  page.once('dialog', (d) => d.accept());
+  await page.getByRole('radio', { name: /^TabSpace/ }).click();
+  await expect(page.getByLabel('Config name')).toHaveValue('TabSpace');
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByLabel('Config name')).toHaveValue('Twiddler default');
+  await expect(page.getByRole('radio', { name: /^Twiddler default.*edited/ })).toHaveAttribute('aria-checked', 'true');
+});
+
+test('a config saved apart from the ticked layout is replaced by it', async ({ page }) => {
+  // Before 0.3.6 the open config and the practice layout were chosen apart. A profile with the
+  // Twiddler default open and Short thumbs ticked opens Short thumbs.
+  await page.goto('./#/tuner');
+  await expect(page.getByLabel('Config name')).toHaveValue('Twiddler default');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tweedledum.profile.v1') ?? '{}').config?.name)).toBe('Twiddler default');
+  // The app saves its own copy when the page is hidden, so change the stored profile as the next page loads.
+  await page.addInitScript(() => {
+    const p = JSON.parse(localStorage.getItem('tweedledum.profile.v1')!);
+    if (p.config?.name !== 'Twiddler default') return;
+    p.layout = { name: 'Short thumbs', entries: [['ROOO', 'a']], keys: [] };
+    p.config.name = 'Twiddler-default';
+    delete p.config.edited;
+    localStorage.setItem('tweedledum.profile.v1', JSON.stringify(p));
+  });
+  await page.reload();
+  await expect(page.getByLabel('Config name')).toHaveValue('Short thumbs');
+  await expect(page.getByText(/The open config, Twiddler-default, was not the ticked layout/)).toBeVisible();
 });

@@ -98,10 +98,12 @@ describe('transfer', () => {
 
   it('loads a config saved before slots as slot 1, and keeps a chosen slot', async () => {
     const old = { ...emptyProfile(5), config: { name: 'Mine', data: 'AAAA' } };
-    expect((await importText(JSON.stringify(old))).config).toEqual({ name: 'Mine', data: 'AAAA', slot: 1 });
+    expect((await importText(JSON.stringify(old))).config).toEqual({ name: 'Mine', data: 'AAAA', slot: 1, edited: false });
     const three = { ...emptyProfile(5), config: { name: 'Mine', data: 'AAAA', slot: 3 } };
     expect((await importText(JSON.stringify(three))).config?.slot).toBe(3);
     const bad = { ...emptyProfile(5), config: { name: 'Mine', data: 'AAAA', slot: 7 } };
     expect((await importText(JSON.stringify(bad))).config?.slot).toBe(1);
+    const edited = { ...emptyProfile(5), config: { name: 'Mine', data: 'AAAA', slot: 1, edited: true } };
+    expect((await importText(JSON.stringify(edited))).config?.edited).toBe(true);
   });
 });

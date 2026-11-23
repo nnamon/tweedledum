@@ -1,17 +1,21 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import Icon from '../ui/Icon.svelte';
   import Segmented from '../ui/Segmented.svelte';
   import Layouts from './Layouts.svelte';
   import { chordText } from '../lib/chords/chord';
-  import { importLayout, LayoutError } from '../lib/chords/import';
+  import { exportLayoutJson, importLayout, importLayoutText, LayoutError } from '../lib/chords/import';
   import { keymap, store } from '../lib/state/app.svelte';
-  import { DEFAULT_NAME, PRESETS, presetConfig } from '../lib/chords/presets';
+  import { DEFAULT_NAME, PRESETS, presetConfig, type Preset } from '../lib/chords/presets';
   import {
     ConfigError, DEDICATED, KEY_NAMES, THUMB_MODIFIERS, THUMB_NAMES, actionLabel, chordLabel, configFromLayout, fromBase64,
     has, keyChord, mirror, parseV7, readSettings, swapThumbs, textChord, textOf, toBase64, toggle, writeSettings, writeV7,
     type Button, type V7Chord, type V7Config, type V7Settings,
   } from '../lib/chords/v7';
   import { PROFILES, applyChanges, type ChangeId, type Report } from '../lib/chords/profiles';
+
+  // One selection: the ticked layout is the config file, and the config file is what lessons,
+  // drills and the Chords page use. Every change to the config updates the practice layout.
 
   const settings = $derived(store.p.settings);
 
@@ -27,9 +31,12 @@
   let cfg = $state<V7Config | null>(load());
   let name = $state(store.p.config?.name ?? '');
   let slot = $state<1 | 2 | 3>(store.p.config?.slot ?? 1);
+  let edited = $state(store.p.config?.edited ?? false);
   let message = $state<{ text: string; ok: boolean } | null>(null);
   let query = $state('');
+  let busy = $state(false);
 
+  const current = $derived(store.p.layout?.name ?? DEFAULT_NAME);
   const s = $derived(cfg ? readSettings(cfg) : null);
   const sorted = $derived(cfg ? [...cfg.chords].sort((a, b) => a.bits - b.bits) : []);
   const shown = $derived.by(() => {
@@ -38,27 +45,130 @@
     return sorted.filter((c) => `${chordLabel(c.bits)} ${actionLabel(c)}`.toLowerCase().includes(q));
   });
 
-  function commit(next: V7Config) {
-    cfg = next;
-    store.p.config = { name: name || 'Config', data: toBase64(writeV7(next)), slot };
+  function save() {
+    if (cfg) store.p.config = { name: name || 'Config', data: toBase64(writeV7(cfg)), slot, edited };
   }
 
-  // ---- Opening and saving ----
+  /** Lessons, drills and the Chords page use the chords in the config that type text. */
+  function practiseOn(next: V7Config, layoutName: string) {
+    const r = importLayout(writeV7(next), `${layoutName}.cfg`);
+    store.p.layout = {
+      name: layoutName,
+      entries: r.layout.entries.map((e) => [chordText(e.chord), e.output]),
+      keys: (r.layout.keys ?? []).map((k) => [chordText(k.chord), k.name]),
+    };
+  }
 
-  async function openFile(e: Event) {
+  /** An edit to the open config. */
+  function commit(next: V7Config) {
+    cfg = next;
+    edited = true;
+    save();
+    practiseOn(next, name || 'Config');
+  }
+
+  /** A new config from the layout list or a file. The default layout keeps the lessons' own copy. */
+  function select(next: V7Config, nextName: string, text: string) {
+    if (cfg) undo = { cfg, name, edited, what: `the switch to ${nextName}` };
+    cfg = next;
+    name = nextName;
+    edited = false;
+    report = null;
+    draft = null;
+    save();
+    if (nextName === DEFAULT_NAME) store.p.layout = null;
+    else practiseOn(next, nextName);
+    message = { text, ok: true };
+  }
+
+  /** Picking another layout replaces the open config. Ask only when there are changes to lose. */
+  function mayReplace(nextName: string): boolean {
+    return !edited || confirm(`Switch to ${nextName}? Your changes to ${name} will be replaced. Download ${fileName()} first to keep them.`);
+  }
+
+  async function choose(p: Preset) {
+    if (!mayReplace(p.name)) return;
+    busy = true;
+    try {
+      const { cfg: next, note } = await presetConfig(p);
+      select(next, p.name, `Switched to ${p.name}: ${next.chords.length} chords. ${note}`);
+    } catch (e) {
+      message = { text: e instanceof LayoutError ? e.message : 'That layout could not be loaded. Nothing was changed.', ok: false };
+    } finally {
+      busy = false;
+    }
+  }
+
+  /** A Twiddler 4 file opens as it is; other formats keep their typing chords. */
+  function openFile(bytes: Uint8Array, fileName: string) {
+    const nextName = fileName.replace(/\.[a-z0-9]+$/i, '') || 'Config';
+    if (!mayReplace(nextName)) return;
+    try {
+      if (bytes[4] === 7) {
+        const next = parseV7(bytes);
+        select(next, nextName, `Opened ${fileName}: ${next.chords.length} chords.`);
+        return;
+      }
+      const r = importLayout(bytes, fileName);
+      const next = configFromLayout(r.layout);
+      select(next, nextName, `Opened ${fileName} (${r.format}): ${r.layout.entries.length} chords that type text, with the Tuner's default settings and device functions.${r.skipped ? ` ${r.skipped} other chords (shortcuts, keys, mouse, or two buttons in a row) were left out.` : ''}`);
+    } catch (e) {
+      message = { text: e instanceof LayoutError || e instanceof ConfigError ? e.message : 'That file could not be read. Nothing was changed.', ok: false };
+    }
+  }
+
+  function openPasted(text: string): boolean {
+    try {
+      const r = importLayoutText(text);
+      if (!mayReplace(r.layout.name)) return false;
+      select(configFromLayout(r.layout), r.layout.name, `Opened the pasted layout (${r.format}): ${r.layout.entries.length} chords that type text.`);
+      return true;
+    } catch (e) {
+      message = { text: e instanceof LayoutError ? e.message : 'That layout could not be read. Nothing was changed.', ok: false };
+      return false;
+    }
+  }
+
+  let pasteText = $state('');
+
+  async function loadFile(e: Event) {
     const el = e.currentTarget as HTMLInputElement;
     const f = el.files?.[0];
     el.value = '';
-    if (!f) return;
-    try {
-      const next = parseV7(new Uint8Array(await f.arrayBuffer()));
-      name = f.name.replace(/\.cfg$/i, '');
-      commit(next);
-      message = { text: `Opened ${f.name}: ${next.chords.length} chords.`, ok: true };
-    } catch (err) {
-      message = { text: err instanceof ConfigError ? err.message : 'This file could not be read as a Twiddler 4 config. Nothing was changed.', ok: false };
-    }
+    if (f) openFile(new Uint8Array(await f.arrayBuffer()), f.name);
   }
+
+  function saveJson() {
+    const km = keymap();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([exportLayoutJson(km.layout)], { type: 'application/json' }));
+    a.download = `${km.layout.name.replace(/[^\w-]+/g, '-')}.json`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+
+  // A config that doesn't match the ticked layout (saved by 0.3.4 or earlier, when they were
+  // chosen apart) is replaced by the ticked layout's config. Undo brings it back.
+  onMount(async () => {
+    if (cfg && name === current) return;
+    const preset = PRESETS.find((p) => p.name === current);
+    const old = cfg ? { name } : null;
+    busy = true;
+    try {
+      const { cfg: next } = preset ? await presetConfig(preset) : { cfg: configFromLayout(keymap().layout) };
+      select(next, current, old ? `The open config, ${old.name}, was not the ticked layout. It is now ${current}.` : `${current}: ${next.chords.length} chords.`);
+      if (!old) {
+        undo = null;
+        message = null;
+      }
+    } catch {
+      message = { text: 'The ticked layout could not be loaded. Check your connection and reload.', ok: false };
+    } finally {
+      busy = false;
+    }
+  });
 
   /** The Twiddler 4 reads its configs from 1.cfg, 2.cfg and 3.cfg. */
   function fileName(): string {
@@ -67,7 +177,7 @@
 
   function setSlot(v: 1 | 2 | 3) {
     slot = v;
-    if (cfg) commit(cfg);
+    save();
   }
 
   function download() {
@@ -78,26 +188,6 @@
     a.download = fileName();
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  function practise() {
-    if (!cfg) return;
-    const r = importLayout(writeV7(cfg), fileName());
-    store.p.layout = {
-      name: name || 'Config',
-      entries: r.layout.entries.map((e) => [chordText(e.chord), e.output]),
-      keys: (r.layout.keys ?? []).map((k) => [chordText(k.chord), k.name]),
-    };
-    message = { text: `Lessons and drills now use ${name || 'this config'}: ${r.layout.entries.length} chords that type text.`, ok: true };
-  }
-
-  function close() {
-    if (!confirm('Close this config? It is removed from this browser and from your progress. Download it first to keep it.')) return;
-    cfg = null;
-    store.p.config = null;
-    message = null;
-    undo = null;
-    report = null;
   }
 
   function rename(e: Event) {
@@ -130,19 +220,25 @@
     message = { text: `Swapped the L and R columns in every chord.${clashNote(r.clashes)}`, ok: r.clashes.length === 0 };
   }
 
-  // ---- Undo, for changes to many chords at once ----
+  // ---- Undo, for changes to many chords at once and for switching layouts ----
 
-  let undo = $state<{ cfg: V7Config; what: string } | null>(null);
+  let undo = $state<{ cfg: V7Config; name: string; edited: boolean; what: string } | null>(null);
 
   function bulk(next: V7Config, what: string) {
-    if (cfg) undo = { cfg, what };
+    if (cfg) undo = { cfg, name, edited, what };
     commit(next);
   }
 
   function doUndo() {
     if (!undo) return;
-    commit(undo.cfg);
-    message = { text: `Undid ${undo.what}.`, ok: true };
+    const u = undo;
+    cfg = u.cfg;
+    name = u.name;
+    edited = u.edited;
+    save();
+    if (u.name === DEFAULT_NAME && !u.edited) store.p.layout = null;
+    else practiseOn(u.cfg, u.name);
+    message = { text: `Undid ${u.what}.`, ok: true };
     undo = null;
     report = null;
   }
@@ -162,25 +258,6 @@
     message = n === 0
       ? { text: `${profile.title}: nothing to change. The config already has everything chosen.`, ok: true }
       : { text: `${profile.title}: ${r.report.placed.length} chords added or moved, ${r.report.removed.length} removed, ${r.report.moved.length} moved out of the way.`, ok: r.report.lost.length === 0 };
-  }
-
-  const layoutName = $derived(store.p.layout?.name ?? DEFAULT_NAME);
-
-  /** A new config from the practice layout. A file of the user's own keeps only its typing chords. */
-  async function startFromLayout() {
-    if (cfg && !confirm(`Replace ${name || 'the open config'} with ${layoutName}? Download the open one first to keep it.`)) return;
-    const preset = PRESETS.find((p) => p.name === layoutName);
-    try {
-      const { cfg: next, note } = preset ? await presetConfig(preset) : { cfg: configFromLayout(keymap().layout), note: 'Its shortcuts and navigation keys are not included.' };
-      name = layoutName;
-      undo = null;
-      report = null;
-      draft = null;
-      commit(next);
-      message = { text: `Started from ${layoutName}: ${next.chords.length} chords. ${note}`, ok: true };
-    } catch (e) {
-      message = { text: e instanceof LayoutError ? e.message : 'That layout could not be loaded. Nothing was changed.', ok: false };
-    }
   }
 
   function pick(id: ChangeId, on: boolean) {
@@ -281,39 +358,43 @@
 <div class="screen wide">
   <h1 class="large-title">Tuner</h1>
 
-  <Layouts />
+  <Layouts {current} {edited} {busy} chords={cfg?.chords.length ?? 0} onpick={choose} />
 
-  <section class="section">
-    <h2 class="section-head">Twiddler 4 config file</h2>
-    {#if !cfg || !s}
-      <div class="group">
-        <button class="row" onclick={startFromLayout}><span class="row-main"><span class="row-title link">Start from {layoutName}</span><span class="row-sub">The practice layout above</span></span></button>
-        <label class="row"><span class="row-main"><span class="row-title link">Open a .cfg file</span><span class="row-sub">Version 7, as Tek Gear's Tuner saves it</span></span><input type="file" accept=".cfg" class="visually-hidden" onchange={openFile} /></label>
-      </div>
-      <p class="section-foot">Change its chords, thumb buttons and settings here, then download it and copy it to the Twiddler. The open file is kept in your progress.</p>
-    {:else}
-      <div class="group">
-        <label class="row"><span class="row-main row-title">Name</span><input class="row-field" value={name} oninput={rename} aria-label="Config name" /></label>
-        <div class="row"><span class="row-main row-title">Chords</span><span class="row-value">{cfg.chords.length}</span></div>
-        {#if name !== layoutName}
-          <button class="row" onclick={startFromLayout}><span class="row-main"><span class="row-title link">Replace with {layoutName}</span><span class="row-sub">The practice layout is {layoutName}. This file is {name || 'a different config'}.</span></span></button>
-        {/if}
-        <div class="row"><span class="row-main row-title">Slot on the Twiddler</span>
-          <span class="slot"><Segmented label="Slot on the Twiddler" options={[{ value: 1, label: '1' }, { value: 2, label: '2' }, { value: 3, label: '3' }]} value={slot} onchange={(v: 1 | 2 | 3) => setSlot(v)} /></span>
-        </div>
-        <button class="row link" onclick={download}><Icon name="download" size={18} /><span class="row-main"><span class="row-title">Download {fileName()}</span><span class="row-sub">{name || 'Config'}, {cfg.chords.length} chords</span></span></button>
-        <button class="row" onclick={practise}><span class="row-main row-title link">Practise on this config</span></button>
-        <button class="row" onclick={close}><span class="row-main row-title danger-text">Close this file</span></button>
-      </div>
-      <p class="section-foot">The download is named for the slot. Copy it to the Twiddler to replace that slot's config.</p>
-    {/if}
-    {#if message}
+  {#if message}
+    <div class="section">
       <p class="notice" class:bad={!message.ok} role="status">
         {message.text}
         {#if undo}<button class="text-button undo" onclick={doUndo}>Undo</button>{/if}
       </p>
-    {/if}
-  </section>
+    </div>
+  {/if}
+
+  {#if cfg && s}
+    <section class="section">
+      <h2 class="section-head">Config file for the Twiddler 4</h2>
+      <div class="group">
+        <label class="row"><span class="row-main row-title">Name</span><input class="row-field" value={name} oninput={rename} aria-label="Config name" /></label>
+        <div class="row"><span class="row-main row-title">Chords</span><span class="row-value">{cfg.chords.length}</span></div>
+        <div class="row"><span class="row-main row-title">Slot on the Twiddler</span>
+          <span class="slot"><Segmented label="Slot on the Twiddler" options={[{ value: 1, label: '1' }, { value: 2, label: '2' }, { value: 3, label: '3' }]} value={slot} onchange={(v: 1 | 2 | 3) => setSlot(v)} /></span>
+        </div>
+        <button class="row link" onclick={download}><Icon name="download" size={18} /><span class="row-main"><span class="row-title">Download {fileName()}</span><span class="row-sub">{name || 'Config'}, {cfg.chords.length} chords</span></span></button>
+      </div>
+      <p class="section-foot">Copy the download to the Twiddler to replace that slot's config. Changes you make below are also what you practise on.</p>
+    </section>
+
+    <section class="section">
+      <div class="group">
+        <label class="row"><span class="row-main"><span class="row-title link">Open a layout file</span><span class="row-sub">.cfg for the Twiddler 2, 3 or 4, a Tuner CSV or Typing Tutor JSON</span></span><input type="file" accept=".cfg,.csv,.json,.txt" class="visually-hidden" onchange={loadFile} /></label>
+        <details class="row paste">
+          <summary class="row-title link">Paste a layout</summary>
+          <textarea class="area" rows="4" bind:value={pasteText} placeholder={'"Thumbs","Fingers","Actions"\n"","1R","[KB]a"'} aria-label="Layout as CSV or JSON"></textarea>
+          <div class="btn-row"><button class="btn" disabled={!pasteText.trim()} onclick={() => openPasted(pasteText) && (pasteText = '')}>Load pasted layout</button></div>
+        </details>
+        <button class="row" onclick={saveJson}><span class="row-main row-title link">Save {name || 'Config'} as JSON</span></button>
+      </div>
+    </section>
+  {/if}
 
   {#if cfg && s}
     <section class="section">
@@ -479,8 +560,27 @@
     color: var(--tw-accent);
   }
 
-  .danger-text {
-    color: var(--tw-bad);
+  .paste {
+    display: block;
+  }
+
+  .paste[open] {
+    padding-bottom: var(--tw-space-4);
+  }
+
+  .paste .area {
+    margin-bottom: var(--tw-space-3);
+  }
+
+  .paste summary {
+    display: flex;
+    align-items: center;
+    min-height: var(--tw-tap);
+    cursor: pointer;
+  }
+
+  label.row {
+    cursor: pointer;
   }
 
   .row.link {

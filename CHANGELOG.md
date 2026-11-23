@@ -1,5 +1,12 @@
 # Version history
 
+## 0.3.6
+
+- Ticking a layout in the Tuner makes it the config file too; before, the practice layout and the config file were chosen apart, so Download could save a different layout from the one ticked.
+- Edits to the config change what you practise on straight away. Practise on this config, Start from, Replace with and Close this file are gone.
+- Switching layouts asks first only when the config has changes, and Undo switches back.
+- A config saved by an older version that doesn't match the ticked layout is replaced by it when the Tuner opens, with Undo.
+
 ## 0.3.5
 
 - Fixed: a config left open in the Tuner stayed open after you ticked another practice layout, so Download gave the old file. The config group now offers "Replace with" the ticked layout, and the Download row names the file it saves.

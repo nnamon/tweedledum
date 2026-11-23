@@ -168,6 +168,8 @@ export interface SavedConfig {
   data: string;
   /** The config slot on the Twiddler 4, which names the file: 1.cfg, 2.cfg or 3.cfg. */
   slot: 1 | 2 | 3;
+  /** Changed since it was picked from the layout list, so picking another layout asks first. */
+  edited: boolean;
 }
 
 function slotOf(v: unknown): 1 | 2 | 3 {
@@ -253,7 +255,7 @@ export function normaliseProfile(raw: unknown): Profile {
     sessions: Array.isArray(raw.sessions) ? (raw.sessions as SessionRec[]) : [],
     runs: Array.isArray(raw.runs) ? (raw.runs as RunRec[]) : [],
     chords: chordsOf(raw.chords),
-    config: isObj(raw.config) && typeof raw.config.data === 'string' ? { name: typeof raw.config.name === 'string' ? raw.config.name : 'Config', data: raw.config.data, slot: slotOf(raw.config.slot) } : null,
+    config: isObj(raw.config) && typeof raw.config.data === 'string' ? { name: typeof raw.config.name === 'string' ? raw.config.name : 'Config', data: raw.config.data, slot: slotOf(raw.config.slot), edited: raw.config.edited === true } : null,
   };
   if (isObj(raw.options)) {
     for (const k of Object.keys(DEFAULT_OPTIONS) as (keyof ExerciseOptions)[]) {

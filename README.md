@@ -25,7 +25,7 @@ During a run the keypad picture lights the next chord, drawn from the layout you
 
 ## Layouts
 
-The default layout is the one the Twiddler 3 and 4 ship with, and the one the Typing Tutor teaches. Pick another under Practice layout at the top of the Tuner tab. Short thumbs, TabSpace, MirrorWalk, DelEnt and TeaSan are built in, and Load a layout file reads your own:
+The default layout is the one the Twiddler 3 and 4 ship with, and the one the Typing Tutor teaches. Pick another at the top of the Tuner tab. The ticked layout is both what you practise on and the config file you download for the Twiddler. Short thumbs, TabSpace, MirrorWalk, DelEnt and TeaSan are built in, and Open a layout file reads your own:
 
 - A Twiddler config file: version 4 (Twiddler 2), 5 (Twiddler 3) or 7 (Twiddler 4).
 - A CSV exported by the Twiddler Tuner.
@@ -35,7 +35,7 @@ Tweedledum keeps only the chords that type text, so shortcuts, mouse actions and
 
 ## Tuner
 
-The Tuner tab edits Twiddler 4 config files (version 7) in the browser. Open a .cfg saved by Tek Gear's Tuner, or press Start from to build one from the practice layout. You can add, change and delete chords, including multi-character ones and keys with modifiers, swap two thumb buttons in every chord, or mirror the layout to the other hand. The thumb modifiers, the small buttons above the keypad and the device settings (button mode, key repeat, haptics, sleep time, touchpad) are there too. Device functions such as Sleep and Clear Bluetooth stay on their buttons, because the Tuner puts them back if they move.
+The Tuner tab edits Twiddler 4 config files (version 7) in the browser. The config file is always the ticked layout, and every change to it also changes what you practise on. Open a .cfg saved by Tek Gear's Tuner to edit it as it is. You can add, change and delete chords, including multi-character ones and keys with modifiers, swap two thumb buttons in every chord, or mirror the layout to the other hand. The thumb modifiers, the small buttons above the keypad and the device settings (button mode, key repeat, haptics, sleep time, touchpad) are there too. Device functions such as Sleep and Clear Bluetooth stay on their buttons, because the Tuner puts them back if they move.
 
 The Twiddler 4 reads its configs from `1.cfg`, `2.cfg` and `3.cfg`. Pick the slot before you download and the file gets that name, so you can copy it straight across.
 
