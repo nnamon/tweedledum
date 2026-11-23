@@ -1,5 +1,9 @@
 # Version history
 
+## 0.3.5
+
+- Fixed: a config left open in the Tuner stayed open after you ticked another practice layout, so Download gave the old file. The config group now offers "Replace with" the ticked layout, and the Download row names the file it saves.
+
 ## 0.3.4
 
 - The Chords page sorts multi-character chords alphabetically, with "the" just before "The"; they were in button order.

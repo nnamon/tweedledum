@@ -168,6 +168,7 @@
 
   /** A new config from the practice layout. A file of the user's own keeps only its typing chords. */
   async function startFromLayout() {
+    if (cfg && !confirm(`Replace ${name || 'the open config'} with ${layoutName}? Download the open one first to keep it.`)) return;
     const preset = PRESETS.find((p) => p.name === layoutName);
     try {
       const { cfg: next, note } = preset ? await presetConfig(preset) : { cfg: configFromLayout(keymap().layout), note: 'Its shortcuts and navigation keys are not included.' };
@@ -294,10 +295,13 @@
       <div class="group">
         <label class="row"><span class="row-main row-title">Name</span><input class="row-field" value={name} oninput={rename} aria-label="Config name" /></label>
         <div class="row"><span class="row-main row-title">Chords</span><span class="row-value">{cfg.chords.length}</span></div>
+        {#if name !== layoutName}
+          <button class="row" onclick={startFromLayout}><span class="row-main"><span class="row-title link">Replace with {layoutName}</span><span class="row-sub">The practice layout is {layoutName}. This file is {name || 'a different config'}.</span></span></button>
+        {/if}
         <div class="row"><span class="row-main row-title">Slot on the Twiddler</span>
           <span class="slot"><Segmented label="Slot on the Twiddler" options={[{ value: 1, label: '1' }, { value: 2, label: '2' }, { value: 3, label: '3' }]} value={slot} onchange={(v: 1 | 2 | 3) => setSlot(v)} /></span>
         </div>
-        <button class="row link" onclick={download}><Icon name="download" size={18} /><span class="row-main row-title">Download {fileName()}</span></button>
+        <button class="row link" onclick={download}><Icon name="download" size={18} /><span class="row-main"><span class="row-title">Download {fileName()}</span><span class="row-sub">{name || 'Config'}, {cfg.chords.length} chords</span></span></button>
         <button class="row" onclick={practise}><span class="row-main row-title link">Practise on this config</span></button>
         <button class="row" onclick={close}><span class="row-main row-title danger-text">Close this file</span></button>
       </div>

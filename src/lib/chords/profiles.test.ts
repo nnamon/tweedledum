@@ -81,4 +81,10 @@ describe('the Short thumbs preset', () => {
     const bits = cfg.chords.map((c) => c.bits);
     expect(new Set(bits).size).toBe(bits.length);
   });
+
+  const tuner = new URL('./fixtures/local/tuner-short-thumbs.cfg', import.meta.url);
+  it.skipIf(!existsSync(tuner))("is byte for byte what Tek Gear's Tuner saves after reading it", async () => {
+    const { shortThumbsConfig } = await import('./profiles');
+    expect(Buffer.from(writeV7(shortThumbsConfig()))).toEqual(readFileSync(tuner));
+  });
 });

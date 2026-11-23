@@ -311,3 +311,25 @@ test('the Chords page sorts multi-character chords and shows their spaces', asyn
   await other.scrollIntoViewIfNeeded();
   await shot(page, 'chords-multi');
 });
+
+test('a config left open is replaced when the practice layout changes', async ({ page }) => {
+  // A config from another layout stays open in the progress. Ticking Short thumbs used to leave it
+  // there, and Download gave the old file.
+  page.on('dialog', (d) => d.accept());
+  await page.goto('./#/tuner');
+  await page.getByRole('button', { name: /^Start from Twiddler default/ }).click();
+  await page.getByRole('radio', { name: /^Short thumbs/ }).click();
+  await expect(page.getByRole('button', { name: /Download 1\.cfg Twiddler default/ })).toBeVisible();
+  await page.getByRole('button', { name: /^Replace with Short thumbs/ }).click();
+  await expect(page.getByText(/Started from Short thumbs/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Replace with/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 128 chords/ })).toBeVisible();
+  const dl = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Download 1\.cfg/ }).click();
+  const bytes = Buffer.concat(await (await (await dl).createReadStream()).toArray());
+  // 1 on 2L 3R 4R (bitmask 0x2280, a key chord for HID 0x1e), and nothing on T1 1R.
+  const chords = new Map<number, number>();
+  for (let o = 128; o + 8 <= 128 + 8 * bytes.readUInt16LE(8); o += 8) chords.set(bytes.readUInt32LE(o), bytes.readUInt16LE(o + 6));
+  expect(chords.get(0x2280)).toBe(0x1e);
+  expect(chords.has(0x0003)).toBe(false);
+});

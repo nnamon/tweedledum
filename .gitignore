@@ -9,3 +9,4 @@ test-results/
 e2e/shots/
 .claude/
 src/lib/chords/fixtures/local/
+.tmp/
