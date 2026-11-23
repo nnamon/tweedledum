@@ -158,7 +158,7 @@
   <section class="section">
     <h2 class="section-head">Layout</h2>
     <div class="group">
-      <button class="row" onclick={() => go('tuner')}><span class="row-main"><span class="row-title">{km.layout.name}</span><span class="row-sub">{km.layout.entries.length} chords that type text. Choose another layout, load your own or make a config file in the Tuner.</span></span><span class="row-chevron"><Icon name="chevron" size={13} /></span></button>
+      <button class="row" onclick={() => go('tuner')}><span class="row-main"><span class="row-title">{km.layout.name}</span><span class="row-sub">{km.layout.entries.length} chords. Change it in the Tuner.</span></span><span class="row-chevron"><Icon name="chevron" size={13} /></span></button>
     </div>
   </section>
 

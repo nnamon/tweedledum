@@ -1,6 +1,6 @@
-// Profiles: sets of changes the Tuner applies to an open config in one go. Each change works from
-// what chords type, not from where a particular layout puts them, so a profile applies to the
-// factory layout, to a Tuner download or to a config built from a typing layout.
+// Profiles: sets of changes the Tuner applies to an open config in one go. Each change finds chords
+// by what they type, so a profile applies to the factory layout, a Tuner download or a config
+// built from a typing layout.
 
 import { DEFAULT_LAYOUT } from './layout';
 import {
@@ -64,7 +64,7 @@ export const SYMBOLS: [string, Button[]][] = [
  */
 export const COMMON_WORDS = ['for ', 'that ', 'this ', 'with ', 'is ', 'from ', 'you ', 'your ', 'not ', 'on ', 'are ', 'have ', 'about ', 'will '];
 
-/** Words and pieces typed often at a shell prompt. A guess, not counted from a corpus. */
+/** Words and pieces typed often at a shell prompt, picked by hand. */
 export const TERMINAL_WORDS = ['git ', 'cd ', 'ls ', 'sudo ', ' && ', ' | ', '../', '~/', 'docker ', 'grep '];
 
 /** Four-finger chords for words: 1R or 1M, then row 2 R or M, then any of rows 3 and 4. */
@@ -79,31 +79,31 @@ function wordSpots(first: Button): number[] {
 export const CHANGES: Record<ChangeId, Change> = {
   system: {
     id: 'system', title: 'Device functions on their usual buttons',
-    detail: 'Sleep, Bluetooth, battery and the other device functions go back where the Tuner expects them. The Tuner adds them back there anyway when it saves a config.',
+    detail: 'Sleep, Bluetooth and battery, where the Tuner puts them',
   },
   nav: {
     id: 'nav', title: 'Arrows and navigation keys',
-    detail: 'The arrows, Home, End, Page Up, Page Down, Escape, Caps Lock, Num Lock, Tab and Shift Tab, where the factory layout has them. Only keys the config has no chord for are added, so this matters for a config built from a typing layout.',
+    detail: 'On the factory chords. Only keys the config has no chord for are added.',
   },
   digits: {
-    id: 'digits', title: 'Digits on the fingers',
-    detail: 'Hold 2L, then rows 3 and 4 pick 1 to 9 as on a phone keypad: 3R 4R is 1, 3L 4L is 9. 2L 4R is 0. Digit chords that use T1, T2 or T3 are removed.',
+    id: 'digits', title: 'Digits on 2L',
+    detail: 'Rows 3 and 4 as a phone keypad: 3R 4R is 1, 3L 4L is 9, 4R alone is 0',
   },
   symbols: {
-    id: 'symbols', title: 'Brackets and symbols on the fingers',
-    detail: '[ ] { } < > | ^ on 1R with rows 3 and 4, ` and ~ on 1M 3R. Their chords that use T1, T2 or T3 are removed.',
+    id: 'symbols', title: 'Brackets and symbols on 1R and 1M',
+    detail: '[ ] { } < > | ^ ` ~',
   },
   thumbs: {
     id: 'thumbs', title: 'T3 holds Control, T4 holds Shift',
-    detail: 'Chords that use T3 alone are removed, so T3 with any letter is Control and that letter. T4 with a letter types the capital.',
+    detail: 'Removes the chords on T3 alone',
   },
   words: {
     id: 'words', title: 'Common word chords',
-    detail: `${COMMON_WORDS.map((w) => w.trim()).join(', ')}, each with its space, on 1R 2R or 1R 2M with rows 3 and 4. Words the config already has are left alone.`,
+    detail: COMMON_WORDS.map((w) => w.trim()).join(', '),
   },
   terminal: {
     id: 'terminal', title: 'Terminal word chords',
-    detail: `${TERMINAL_WORDS.map((w) => `"${w}"`).join(', ')} on 1M 2R or 1M 2M with rows 3 and 4.`,
+    detail: TERMINAL_WORDS.map((w) => w.trim()).join(', '),
   },
 };
 
@@ -111,7 +111,10 @@ export const PROFILES: Profile[] = [
   {
     id: 'short-thumbs',
     title: 'Short thumbs',
-    detail: 'For hands that can\'t reach T1 and T2. Everything you type goes on the finger buttons, with T3 as Control and T4 as Shift.',
+    detail:
+      "For hands that can't reach T1 and T2. Digit and symbol chords that use T1, T2 or T3 move to the fingers. " +
+      "The word chords go on 1R and 1M with row 2, and each types its word and a space. They are the words that save the most typing in Peter Norvig's counts of English web text. " +
+      'To learn the new chords, press Practise on this config, then open Learn chords.',
     changes: [CHANGES.system, CHANGES.nav, CHANGES.digits, CHANGES.symbols, CHANGES.thumbs, CHANGES.words, CHANGES.terminal],
   },
 ];

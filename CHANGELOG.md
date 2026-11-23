@@ -1,21 +1,27 @@
 # Version history
 
+## 0.3.3
+
+- The Tuner page is one list of grouped rows, as in Settings: practice layout first, then the config file. The Edit button on every layout is gone; with no file open, "Start from" builds one from the practice layout.
+- Profile changes are switches with one line each, and the profile's explanation moved to the footer.
+- Download, Practise and Close are rows in the config group.
+
 ## 0.3.2
 
-- Layouts are now chosen at the top of the Tuner tab instead of at the bottom of Settings. Tap a layout to practise on it; a tick shows the one in use. Each has an Edit button that opens it in the config editor below. Settings shows the layout in use and links there.
-- Choose the config slot on the Twiddler, 1, 2 or 3. The download is named for it: 1.cfg, 2.cfg or 3.cfg. The slot is saved with the config in your progress.
+- Moved layouts from the bottom of Settings to the top of the Tuner; a tick shows the one in use.
+- Added a slot choice, 1 to 3, that names the download 1.cfg, 2.cfg or 3.cfg; the Twiddler 4 reads those names.
 
 ## 0.3.1
 
-- Added Short thumbs to Settings, Layout, Other layouts: the Twiddler default with the Short thumbs profile applied. Load it to practise on it, or open it in the Tuner to download it for the Twiddler.
-- The Short thumbs profile now adds the arrows, Home, End, Page Up, Page Down and the other navigation keys where the factory layout has them, when a config has no chord for them. A config built from a typing layout used to have none.
+- Added Short thumbs as a built-in layout: the Twiddler default with the Short thumbs profile applied.
+- The Short thumbs profile adds the arrows and other navigation keys on their factory chords when a config has none.
 
 ## 0.3.0
 
-- The config editor is now the Tuner, with its own tab.
-- Added the Short thumbs profile, for hands that can't reach T1 and T2. It moves digits, brackets and symbols onto the finger buttons, makes T3 hold Control and T4 hold Shift, and adds 14 common word chords and 10 terminal ones. Choose which parts to apply. The Tuner lists what changed and warns about anything you can no longer type. You can also start a new config from the layout in use with the profile applied.
+- Moved the config editor to its own tab, the Tuner.
+- Added the Short thumbs profile, for hands that can't reach T1 and T2; you choose which of its changes to apply.
 - Undo takes back the last profile, thumb swap or mirror.
-- Removed the warning about multi-character strings longer than 255 bytes. Tek Gear's Tuner reads and writes configs with longer strings.
+- Removed the warning about strings past byte 255; Tek Gear's Tuner reads and writes them.
 
 ## 0.2.0
 

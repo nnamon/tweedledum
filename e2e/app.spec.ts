@@ -94,7 +94,6 @@ test('a bundled layout loads and changes the chords', async ({ page }) => {
   await page.getByRole('button', { name: /^Twiddler default/ }).click();
   await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
   await page.getByRole('radio', { name: /^TabSpace/ }).click();
-  await expect(page.getByText(/Now practising on TabSpace/)).toBeVisible();
   await expect(page.getByRole('radio', { name: /^TabSpace/ })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: /^Twiddler default/ })).toHaveAttribute('aria-checked', 'false');
   await shot(page, 'layouts');
@@ -159,8 +158,8 @@ test('learn chords counts a word chord only when it comes in one burst', async (
 
 test('the Tuner builds, swaps, edits and downloads a Twiddler 4 config', async ({ page }) => {
   await page.goto('./#/tuner');
-  await page.getByRole('button', { name: 'Edit Twiddler default' }).click();
-  await expect(page.getByText(/Opened Twiddler-default/)).toBeVisible();
+  await page.getByRole('button', { name: /^Start from Twiddler default/ }).click();
+  await expect(page.getByText(/Started from Twiddler default: \d+ chords/)).toBeVisible();
 
   await page.getByRole('button', { name: 'Swap', exact: true }).click();
   await expect(page.getByText(/Swapped T1 and T3 in every chord/)).toBeVisible();
@@ -184,7 +183,7 @@ test('the Tuner builds, swaps, edits and downloads a Twiddler 4 config', async (
   const bytes = new Uint8Array(await (await file.createReadStream()).toArray().then((c) => Buffer.concat(c)));
   expect(bytes[4]).toBe(7);
 
-  await page.getByRole('button', { name: 'Practise with this config' }).click();
+  await page.getByRole('button', { name: 'Practise on this config' }).click();
   await expect(page.getByText(/Lessons and drills now use/)).toBeVisible();
   await page.goto('./#/chords');
   await page.keyboard.press('1');
@@ -195,7 +194,7 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await page.goto('./#/practice');
   await page.getByRole('link', { name: 'Tuner' }).first().click();
   await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
-  await page.getByRole('button', { name: 'Edit Twiddler default' }).click();
+  await page.getByRole('button', { name: /^Start from Twiddler default/ }).click();
   await page.getByLabel(/Terminal word chords/).uncheck();
   await page.getByRole('button', { name: 'Apply 6 changes' }).click();
   await expect(page.getByText(/Short thumbs: \d+ chords added or moved/)).toBeVisible();
@@ -214,7 +213,7 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await page.getByRole('button', { name: 'Apply 6 changes' }).click();
   await expect(page.getByText('Short thumbs: nothing to change.', { exact: false })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Practise with this config' }).click();
+  await page.getByRole('button', { name: 'Practise on this config' }).click();
   await page.goto('./#/chords');
   await page.keyboard.press('1');
   await expect(page.locator('.explore')).toContainText('0LRR');
@@ -281,9 +280,9 @@ test('Settings shows the version', async ({ page }) => {
 test('the Short thumbs preset loads for practice and opens in the editor', async ({ page }) => {
   await page.goto('./#/tuner');
   await page.getByRole('radio', { name: /^Short thumbs/ }).click();
-  await expect(page.getByText(/Now practising on Short thumbs/)).toBeVisible();
-  await page.getByRole('button', { name: 'Edit Short thumbs' }).click();
-  await expect(page.getByText(/Opened Short-thumbs/)).toBeVisible();
+  await expect(page.getByRole('radio', { name: /^Short thumbs/ })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('button', { name: /^Start from Short thumbs/ }).click();
+  await expect(page.getByText(/Started from Short thumbs/)).toBeVisible();
   await shot(page, 'preset');
   await page.getByPlaceholder('Search by buttons or action').fill('grep');
   await expect(page.locator('.list')).toContainText('1M 2M 3R 4R');

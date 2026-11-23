@@ -3,10 +3,11 @@
   import Segmented from '../ui/Segmented.svelte';
   import Layouts from './Layouts.svelte';
   import { chordText } from '../lib/chords/chord';
-  import { importLayout } from '../lib/chords/import';
-  import { store } from '../lib/state/app.svelte';
+  import { importLayout, LayoutError } from '../lib/chords/import';
+  import { keymap, store } from '../lib/state/app.svelte';
+  import { DEFAULT_NAME, PRESETS, presetConfig } from '../lib/chords/presets';
   import {
-    ConfigError, DEDICATED, KEY_NAMES, THUMB_MODIFIERS, THUMB_NAMES, actionLabel, chordLabel, fromBase64,
+    ConfigError, DEDICATED, KEY_NAMES, THUMB_MODIFIERS, THUMB_NAMES, actionLabel, chordLabel, configFromLayout, fromBase64,
     has, keyChord, mirror, parseV7, readSettings, swapThumbs, textChord, textOf, toBase64, toggle, writeSettings, writeV7,
     type Button, type V7Chord, type V7Config, type V7Settings,
   } from '../lib/chords/v7';
@@ -163,17 +164,22 @@
       : { text: `${profile.title}: ${r.report.placed.length} chords added or moved, ${r.report.removed.length} removed, ${r.report.moved.length} moved out of the way.`, ok: r.report.lost.length === 0 };
   }
 
-  let editorHead: HTMLElement | undefined = $state();
+  const layoutName = $derived(store.p.layout?.name ?? DEFAULT_NAME);
 
-  function editLayout(next: V7Config, nextName: string, note: string) {
-    if (cfg && !confirm(`Open ${nextName} in the config editor? It replaces ${name || 'the config'} that is open now. Download that first to keep it.`)) return;
-    name = nextName;
-    undo = null;
-    report = null;
-    draft = null;
-    commit(next);
-    message = { text: `Opened ${nextName}: ${next.chords.length} chords. ${note}`, ok: true };
-    requestAnimationFrame(() => editorHead?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  /** A new config from the practice layout. A file of the user's own keeps only its typing chords. */
+  async function startFromLayout() {
+    const preset = PRESETS.find((p) => p.name === layoutName);
+    try {
+      const { cfg: next, note } = preset ? await presetConfig(preset) : { cfg: configFromLayout(keymap().layout), note: 'Its shortcuts and navigation keys are not included.' };
+      name = layoutName;
+      undo = null;
+      report = null;
+      draft = null;
+      commit(next);
+      message = { text: `Started from ${layoutName}: ${next.chords.length} chords. ${note}`, ok: true };
+    } catch (e) {
+      message = { text: e instanceof LayoutError ? e.message : 'That layout could not be loaded. Nothing was changed.', ok: false };
+    }
   }
 
   function pick(id: ChangeId, on: boolean) {
@@ -273,57 +279,51 @@
 
 <div class="screen wide">
   <h1 class="large-title">Tuner</h1>
-  <p class="lede">Choose the layout you practise on, and make a config file for your Twiddler 4.</p>
 
-  <Layouts onedit={editLayout} />
+  <Layouts />
 
-  <h2 class="editor-head" bind:this={editorHead}>Config editor</h2>
-  <p class="lede">
-    Change a Twiddler 4 config file (version 7): its chords, thumb buttons and settings, or apply a profile that changes many chords at once. The file stays in this browser and in your progress. Download it when you're done and copy it to the Twiddler.
-  </p>
-
-  {#if message}
-    <p class="notice" class:bad={!message.ok} role="status">
-      {message.text}
-      {#if undo}<button class="text-button undo" onclick={doUndo}>Undo</button>{/if}
-    </p>
-  {/if}
-
-  {#if !cfg || !s}
-    <section class="section">
+  <section class="section">
+    <h2 class="section-head">Twiddler 4 config file</h2>
+    {#if !cfg || !s}
       <div class="group">
-        <label class="row"><span class="row-main"><span class="row-title link">Open a config file</span><span class="row-sub">A .cfg for the Twiddler 4, such as one downloaded from Tek Gear's Tuner.</span></span><input type="file" accept=".cfg" class="visually-hidden" onchange={openFile} /></label>
+        <button class="row" onclick={startFromLayout}><span class="row-main"><span class="row-title link">Start from {layoutName}</span><span class="row-sub">The practice layout above</span></span></button>
+        <label class="row"><span class="row-main"><span class="row-title link">Open a .cfg file</span><span class="row-sub">Version 7, as Tek Gear's Tuner saves it</span></span><input type="file" accept=".cfg" class="visually-hidden" onchange={openFile} /></label>
       </div>
-      <p class="section-foot">Or press Edit on a layout above to start from it.</p>
-    </section>
-  {:else}
-    <section class="section">
+      <p class="section-foot">Change its chords, thumb buttons and settings here, then download it and copy it to the Twiddler. The open file is kept in your progress.</p>
+    {:else}
       <div class="group">
         <label class="row"><span class="row-main row-title">Name</span><input class="row-field" value={name} oninput={rename} aria-label="Config name" /></label>
         <div class="row"><span class="row-main row-title">Chords</span><span class="row-value">{cfg.chords.length}</span></div>
-        <div class="row"><span class="row-main"><span class="row-title">Slot on the Twiddler</span><span class="row-sub">The file is named for it. Copy it to the Twiddler to replace that slot's config.</span></span>
-          <Segmented label="Slot on the Twiddler" options={[{ value: 1, label: '1' }, { value: 2, label: '2' }, { value: 3, label: '3' }]} value={slot} onchange={(v: 1 | 2 | 3) => setSlot(v)} />
+        <div class="row"><span class="row-main row-title">Slot on the Twiddler</span>
+          <span class="slot"><Segmented label="Slot on the Twiddler" options={[{ value: 1, label: '1' }, { value: 2, label: '2' }, { value: 3, label: '3' }]} value={slot} onchange={(v: 1 | 2 | 3) => setSlot(v)} /></span>
         </div>
+        <button class="row link" onclick={download}><Icon name="download" size={18} /><span class="row-main row-title">Download {fileName()}</span></button>
+        <button class="row" onclick={practise}><span class="row-main row-title link">Practise on this config</span></button>
+        <button class="row" onclick={close}><span class="row-main row-title danger-text">Close this file</span></button>
       </div>
-      <div class="btn-row">
-        <button class="btn primary" onclick={download}><Icon name="download" size={18} /> Download {fileName()}</button>
-        <button class="btn" onclick={practise}>Practise with this config</button>
-        <button class="btn danger" onclick={close}>Close</button>
-      </div>
-    </section>
+      <p class="section-foot">The download is named for the slot. Copy it to the Twiddler to replace that slot's config.</p>
+    {/if}
+    {#if message}
+      <p class="notice" class:bad={!message.ok} role="status">
+        {message.text}
+        {#if undo}<button class="text-button undo" onclick={doUndo}>Undo</button>{/if}
+      </p>
+    {/if}
+  </section>
 
+  {#if cfg && s}
     <section class="section">
-      <h2 class="section-head">Profile: {profile.title}</h2>
-      <p class="section-intro">{profile.detail}</p>
+      <h2 class="section-head">{profile.title} profile</h2>
       <div class="group">
         {#each profile.changes as c (c.id)}
-          <label class="row change">
-            <input type="checkbox" checked={chosen.includes(c.id)} onchange={(e) => pick(c.id, e.currentTarget.checked)} />
+          <label class="row">
             <span class="row-main"><span class="row-title">{c.title}</span><span class="row-sub">{c.detail}</span></span>
+            <input type="checkbox" role="switch" class="switch" checked={chosen.includes(c.id)} onchange={(e) => pick(c.id, e.currentTarget.checked)} />
           </label>
         {/each}
       </div>
-      <div class="btn-row"><button class="btn primary" onclick={applyProfile} disabled={chosen.length === 0}>Apply {chosen.length} {chosen.length === 1 ? 'change' : 'changes'}</button></div>
+      <p class="section-foot">{profile.detail}</p>
+      <div class="btn-row apply"><button class="btn" onclick={applyProfile} disabled={chosen.length === 0}>Apply {chosen.length} {chosen.length === 1 ? 'change' : 'changes'}</button></div>
       {#if report}
         <div class="report" aria-label="What the profile changed">
           {#if report.lost.length}<p class="notice bad">No chord types these any more: {report.lost.join(' ')}</p>{/if}
@@ -338,7 +338,6 @@
           {/each}
         </div>
       {/if}
-      <p class="section-foot">The word chords come from Peter Norvig's word counts for English web text: the words that save the most chords for each chord learnt. The terminal words are a guess. Practise with this config, then Learn chords, to learn the new ones.</p>
     </section>
 
     <section class="section">
@@ -468,33 +467,28 @@
 </div>
 
 <style>
-  .editor-head {
-    margin-top: var(--tw-space-8);
-    padding: var(--tw-space-2) var(--tw-space-4);
-    font-size: var(--tw-text-title);
-    font-weight: var(--tw-weight-bold);
-    scroll-margin-top: var(--tw-space-4);
-  }
-
   .undo {
     margin-left: var(--tw-space-2);
   }
 
-  .section-intro {
-    margin-bottom: var(--tw-space-2);
-    color: var(--tw-label2);
+  .link {
+    color: var(--tw-accent);
   }
 
-  .change {
-    align-items: flex-start;
-    gap: var(--tw-space-3);
+  .danger-text {
+    color: var(--tw-bad);
   }
 
-  .change input {
-    flex: none;
-    width: 20px;
-    height: 20px;
-    margin-top: var(--tw-space-1);
+  .row.link {
+    gap: var(--tw-space-2);
+  }
+
+  .apply {
+    margin-top: var(--tw-space-3);
+  }
+
+  .slot :global(.seg-i) {
+    min-width: var(--tw-tap);
   }
 
   .report {
