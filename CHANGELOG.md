@@ -1,5 +1,9 @@
 # Version history
 
+## 0.3.9
+
+- Removed the terminal word chords (git, cd, ls, sudo, &&, |, ../, ~/, docker, grep) from the Short thumbs profile and layout. Short thumbs is now 118 chords; open the Tuner and download it again for the Twiddler.
+
 ## 0.3.8
 
 - Short thumbs digits are on a row 1 barre: hold 1L, 1M and 1R with one finger, then 2L 3L 4L for 1 2 3, the M column for 4 5 6, the R column for 7 8 9, and 2L 3L for 0. Tek Gear's Tuner reads the file unchanged.

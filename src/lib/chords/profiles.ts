@@ -8,7 +8,7 @@ import {
   type Button, type V7Chord, type V7Config,
 } from './v7';
 
-export type ChangeId = 'system' | 'nav' | 'digits' | 'symbols' | 'thumbs' | 'words' | 'terminal';
+export type ChangeId = 'system' | 'nav' | 'digits' | 'symbols' | 'thumbs' | 'words';
 
 export interface Change {
   id: ChangeId;
@@ -68,10 +68,7 @@ export const SYMBOLS: [string, Button[]][] = [
  */
 export const COMMON_WORDS = ['for ', 'that ', 'this ', 'with ', 'is ', 'from ', 'you ', 'your ', 'not ', 'on ', 'are ', 'have ', 'about ', 'will '];
 
-/** Words and pieces typed often at a shell prompt, picked by hand. */
-export const TERMINAL_WORDS = ['git ', 'cd ', 'ls ', 'sudo ', ' && ', ' | ', '../', '~/', 'docker ', 'grep '];
-
-/** Four-finger chords for words: 1R or 1M, then row 2 R or M, then any of rows 3 and 4. */
+/** Four-finger chords for words: the given row 1 button, then row 2 R or M, then any of rows 3 and 4. */
 function wordSpots(first: Button): number[] {
   const out: number[] = [];
   for (const two of ['R', 'M'] as const) for (const three of ['R', 'M', 'L'] as const) for (const four of ['R', 'M', 'L'] as const) {
@@ -105,10 +102,6 @@ export const CHANGES: Record<ChangeId, Change> = {
     id: 'words', title: 'Common word chords',
     detail: COMMON_WORDS.map((w) => w.trim()).join(', '),
   },
-  terminal: {
-    id: 'terminal', title: 'Terminal word chords',
-    detail: TERMINAL_WORDS.map((w) => w.trim()).join(', '),
-  },
 };
 
 export const PROFILES: Profile[] = [
@@ -117,9 +110,9 @@ export const PROFILES: Profile[] = [
     title: 'Short thumbs',
     detail:
       "For hands that can't reach T1 and T2. Digit and symbol chords that use T1, T2 or T3 move to the fingers. " +
-      "The word chords go on 1R and 1M with row 2, and each types its word and a space. They are the words that save the most typing in Peter Norvig's counts of English web text. " +
+      "The word chords start with 1R and row 2, and each types its word and a space. They are the words that save the most typing in Peter Norvig's counts of English web text. " +
       'Applying it changes what you practise on too, so Learn chords picks up the new ones.',
-    changes: [CHANGES.system, CHANGES.nav, CHANGES.digits, CHANGES.symbols, CHANGES.thumbs, CHANGES.words, CHANGES.terminal],
+    changes: [CHANGES.system, CHANGES.nav, CHANGES.digits, CHANGES.symbols, CHANGES.thumbs, CHANGES.words],
   },
 ];
 
@@ -167,7 +160,6 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
   if (want.has('digits')) DIGITS.forEach(([, b]) => reserved.add(bitsOf(...b)));
   if (want.has('symbols')) SYMBOLS.forEach(([, b]) => reserved.add(bitsOf(...b)));
   if (want.has('words')) wordSpots('1R').forEach((b) => reserved.add(b));
-  if (want.has('terminal')) wordSpots('1M').forEach((b) => reserved.add(b));
   const displaced: V7Chord[] = [];
 
   /** Puts the chord on its buttons, moving aside whatever was there unless it is a device function. */
@@ -232,7 +224,6 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
     }
   };
   if (want.has('words')) placeWords(COMMON_WORDS, wordSpots('1R'));
-  if (want.has('terminal')) placeWords(TERMINAL_WORDS, wordSpots('1M'));
 
   if (want.has('thumbs')) {
     for (const c of chords.filter((c) => c.type !== 1 && (c.bits & THUMB_BITS) === T3)) {

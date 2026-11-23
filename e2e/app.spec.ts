@@ -197,13 +197,13 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await page.goto('./#/practice');
   await page.getByRole('link', { name: 'Tuner' }).first().click();
   await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
-  await page.getByLabel(/Terminal word chords/).uncheck();
-  await page.getByRole('button', { name: 'Apply 6 changes' }).click();
+  await page.getByLabel(/Common word chords/).uncheck();
+  await page.getByRole('button', { name: 'Apply 5 changes' }).click();
   await expect(page.getByText(/Short thumbs: \d+ chords added or moved/)).toBeVisible();
   await page.getByText(/^Added or moved/).click();
   await expect(page.locator('.report')).toContainText('1L 1M 1R 2L = 1');
-  await expect(page.locator('.report')).toContainText('"for "');
-  await expect(page.locator('.report')).not.toContainText('"git "');
+  // Common word chords was switched off, so no word chord is added.
+  await expect(page.locator('.report')).not.toContainText('"for "');
   await shot(page, 'tuner-profile');
 
   await page.getByRole('button', { name: 'Undo' }).click();
@@ -211,8 +211,8 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await page.getByPlaceholder('Search by buttons or action').fill('1L 1M 1R 2L');
   await expect(page.locator('.list')).toContainText('No chords match');
 
-  await page.getByRole('button', { name: 'Apply 6 changes' }).click();
-  await page.getByRole('button', { name: 'Apply 6 changes' }).click();
+  await page.getByRole('button', { name: 'Apply 5 changes' }).click();
+  await page.getByRole('button', { name: 'Apply 5 changes' }).click();
   await expect(page.getByText('Short thumbs: nothing to change.', { exact: false })).toBeVisible();
 
   await page.goto('./#/chords');
@@ -284,10 +284,10 @@ test('the Short thumbs preset loads for practice and opens in the editor', async
   await page.goto('./#/tuner');
   await page.getByRole('radio', { name: /^Short thumbs/ }).click();
   await expect(page.getByRole('radio', { name: /^Short thumbs/ })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByText(/Switched to Short thumbs: 128 chords/)).toBeVisible();
+  await expect(page.getByText(/Switched to Short thumbs: 118 chords/)).toBeVisible();
   await shot(page, 'preset');
-  await page.getByPlaceholder('Search by buttons or action').fill('grep');
-  await expect(page.locator('.list')).toContainText('1M 2M 3R 4R');
+  await page.getByPlaceholder('Search by buttons or action').fill('about');
+  await expect(page.locator('.list')).toContainText('1R 2M 3M 4M');
   const dl = page.waitForEvent('download');
   await page.getByRole('radiogroup', { name: 'Slot on the Twiddler' }).getByText('2').click();
   await page.getByRole('button', { name: /Download/ }).click();
@@ -303,16 +303,22 @@ test('the Chords page sorts multi-character chords and shows their spaces', asyn
   await page.getByRole('radio', { name: /^Short thumbs/ }).click();
   await page.goto('./#/chords');
   const words = page.locator('.list-section', { has: page.getByRole('heading', { name: 'Words and word parts' }) });
-  const other = page.locator('.list-section', { has: page.getByRole('heading', { name: 'Other multi-character chords' }) });
   await expect(words.locator('.chip').first()).toContainText('about␣');
-  await expect(other).toContainText('␣&&␣');
-  await expect(words).not.toContainText('&&');
+  await expect(page.getByRole('heading', { name: 'Other multi-character chords' })).toHaveCount(0);
   await words.getByRole('button', { name: /^for/ }).click();
   await expect(page.locator('.explore')).toContainText('Ends with a space');
-  await other.getByRole('button', { name: /&&/ }).click();
-  await expect(page.locator('.explore')).toContainText('With a space before and after');
-  await other.scrollIntoViewIfNeeded();
+  await words.getByRole('button', { name: /^in 0R0M/ }).click();
+  await expect(page.locator('.explore')).toContainText('No space after');
   await shot(page, 'chords-multi');
+
+  // MirrorWalk has a string that isn't a word, listed apart.
+  await page.goto('./#/tuner');
+  await page.getByRole('radio', { name: /^MirrorWalk Griatch/ }).click();
+  await expect(page.getByLabel('Config name')).toHaveValue('MirrorWalk');
+  await page.goto('./#/chords');
+  const other = page.locator('.list-section', { has: page.getByRole('heading', { name: 'Other multi-character chords' }) });
+  await expect(other).toContainText('...␣');
+  await expect(words).not.toContainText('...');
 });
 
 test('ticking a layout makes it the config file', async ({ page }) => {
@@ -322,7 +328,7 @@ test('ticking a layout makes it the config file', async ({ page }) => {
   await page.getByRole('radio', { name: /^Short thumbs/ }).click();
   await expect(page.getByLabel('Config name')).toHaveValue('Short thumbs');
   const dl = page.waitForEvent('download');
-  await page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 128 chords/ }).click();
+  await page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 118 chords/ }).click();
   const bytes = Buffer.concat(await (await (await dl).createReadStream()).toArray());
   // 1 on a row 1 barre with 2L (bitmask 0x8e, a key chord for HID 0x1e), and nothing on T1 1R.
   const chords = new Map<number, number>();
@@ -400,7 +406,7 @@ test('an unedited built-in layout saved by an older version is rebuilt on openin
   });
   await page.reload();
   await expect(page.getByText(/Short thumbs changed in this version/)).toBeVisible();
-  await expect(page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 128 chords/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 118 chords/ })).toBeVisible();
   await page.goto('./#/chords');
   await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('1');

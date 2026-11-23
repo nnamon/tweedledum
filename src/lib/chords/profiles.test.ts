@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_LAYOUT } from './layout';
-import { CHANGES, COMMON_WORDS, PROFILES, TERMINAL_WORDS, applyChanges, type ChangeId } from './profiles';
+import { CHANGES, COMMON_WORDS, PROFILES, applyChanges, type ChangeId } from './profiles';
 import { chordLabel, configFromLayout, parseV7, readSettings, textOf, writeV7, type V7Config } from './v7';
 
 const ALL = Object.keys(CHANGES) as ChangeId[];
@@ -26,7 +26,7 @@ describe('the short-thumbs profile', () => {
     expect(chordsFor(cfg, '[')).toEqual(['1R 3R 4L']);
     expect(chordsFor(cfg, '~')).toEqual(['1M 3R 4L']);
     expect(chordsFor(cfg, 'for ')).toEqual(['1R 2R 3R 4M']);
-    for (const w of [...COMMON_WORDS, ...TERMINAL_WORDS]) expect(chordsFor(cfg, w), w).toHaveLength(1);
+    for (const w of COMMON_WORDS) expect(chordsFor(cfg, w), w).toHaveLength(1);
     expect(report.lost).toEqual([]);
     expect(report.farOnly).toEqual([]);
     // Nothing that types text is left on T1, T2 or T3 alone.
@@ -68,7 +68,7 @@ describe('the short-thumbs profile', () => {
 });
 
 describe('the Short thumbs preset', () => {
-  it('has the navigation keys, every character on the fingers or T4, and all 24 word chords', async () => {
+  it('has the navigation keys, every character on the fingers or T4, and all 14 word chords', async () => {
     const { shortThumbsConfig } = await import('./profiles');
     const { actionLabel } = await import('./v7');
     const cfg = shortThumbsConfig();
@@ -76,7 +76,7 @@ describe('the Short thumbs preset', () => {
     for (const l of ['2M 3R = Up', '2M 3M = Left', '2M 3L = Down', '2M 4M = Right', '2R 3R 4R = Home', '3R 4R = Page Up', '3L 4L = Page Down']) expect(labels).toContain(l);
     expect(labels).toContain('2L 3L 4L = End');
     expect(chordsFor(cfg, '9')).toEqual(['1L 1M 1R 4R']);
-    for (const w of [...COMMON_WORDS, ...TERMINAL_WORDS]) expect(chordsFor(cfg, w), w).toHaveLength(1);
+    for (const w of COMMON_WORDS) expect(chordsFor(cfg, w), w).toHaveLength(1);
     expect(cfg.chords.filter((c) => c.type !== 1 && (c.bits & (T1 | T2 | T3)) !== 0)).toEqual([]);
     const bits = cfg.chords.map((c) => c.bits);
     expect(new Set(bits).size).toBe(bits.length);
