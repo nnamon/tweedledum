@@ -91,8 +91,13 @@ test('screens render', async ({ page }) => {
 
 test('a bundled layout loads and changes the chords', async ({ page }) => {
   await page.goto('./#/settings');
-  await page.getByRole('button', { name: 'TabSpace' }).click();
-  await expect(page.getByText(/Loaded TabSpace/)).toBeVisible();
+  await page.getByRole('button', { name: /^Twiddler default/ }).click();
+  await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
+  await page.getByRole('radio', { name: /^TabSpace/ }).click();
+  await expect(page.getByText(/Now practising on TabSpace/)).toBeVisible();
+  await expect(page.getByRole('radio', { name: /^TabSpace/ })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: /^Twiddler default/ })).toHaveAttribute('aria-checked', 'false');
+  await shot(page, 'layouts');
   await page.goto('./#/chords');
   await page.keyboard.press('e');
   // TabSpace types e with row 2 M alone.
@@ -111,9 +116,11 @@ test('a Tuner config file loads and moves with the progress code', async ({ page
   cfg.writeUInt32LE(0x102, 136);
   cfg.set([2, 0, 0x1e], 140);
 
+  await page.goto('./#/tuner');
+  await page.locator('input[type=file][accept*=".csv"]').setInputFiles({ name: 'T3Num.cfg', mimeType: 'application/octet-stream', buffer: cfg });
+  await expect(page.getByText(/Now practising on T3Num.*version 7/)).toBeVisible();
+  await expect(page.getByRole('radio', { name: /^T3Num/ })).toHaveAttribute('aria-checked', 'true');
   await page.goto('./#/settings');
-  await page.locator('input[type=file][accept*=".cfg"]').setInputFiles({ name: 'T3Num.cfg', mimeType: 'application/octet-stream', buffer: cfg });
-  await expect(page.getByText(/Loaded T3Num.*version 7/)).toBeVisible();
   await page.getByRole('button', { name: /Copy progress code/ }).click();
   const code = await page.getByLabel('Progress code', { exact: true }).inputValue();
 
@@ -151,10 +158,9 @@ test('learn chords counts a word chord only when it comes in one burst', async (
 });
 
 test('the Tuner builds, swaps, edits and downloads a Twiddler 4 config', async ({ page }) => {
-  await page.goto('./#/settings');
-  await page.getByRole('button', { name: /^Tuner/ }).click();
-  await page.getByRole('button', { name: /Start from the layout in use/ }).first().click();
-  await expect(page.getByText(/Started from Twiddler default/)).toBeVisible();
+  await page.goto('./#/tuner');
+  await page.getByRole('button', { name: 'Edit Twiddler default' }).click();
+  await expect(page.getByText(/Opened Twiddler-default/)).toBeVisible();
 
   await page.getByRole('button', { name: 'Swap', exact: true }).click();
   await expect(page.getByText(/Swapped T1 and T3 in every chord/)).toBeVisible();
@@ -174,7 +180,7 @@ test('the Tuner builds, swaps, edits and downloads a Twiddler 4 config', async (
   const dl = page.waitForEvent('download');
   await page.getByRole('button', { name: /Download/ }).click();
   const file = await dl;
-  expect(file.suggestedFilename()).toBe('Twiddler-default.cfg');
+  expect(file.suggestedFilename()).toBe('1.cfg');
   const bytes = new Uint8Array(await (await file.createReadStream()).toArray().then((c) => Buffer.concat(c)));
   expect(bytes[4]).toBe(7);
 
@@ -189,7 +195,7 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await page.goto('./#/practice');
   await page.getByRole('link', { name: 'Tuner' }).first().click();
   await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
-  await page.getByRole('button', { name: /Start from the layout in use/ }).first().click();
+  await page.getByRole('button', { name: 'Edit Twiddler default' }).click();
   await page.getByLabel(/Terminal word chords/).uncheck();
   await page.getByRole('button', { name: 'Apply 6 changes' }).click();
   await expect(page.getByText(/Short thumbs: \d+ chords added or moved/)).toBeVisible();
@@ -272,19 +278,19 @@ test('Settings shows the version', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Update and reload' })).toBeVisible();
 });
 
-test('the Short thumbs preset loads for practice and opens in the Tuner', async ({ page }) => {
-  await page.goto('./#/settings');
-  await page.getByRole('button', { name: /^Short thumbs/ }).click();
-  await expect(page.getByText(/Loaded Short thumbs/)).toBeVisible();
-  await page.getByRole('button', { name: 'Open in Tuner' }).scrollIntoViewIfNeeded();
+test('the Short thumbs preset loads for practice and opens in the editor', async ({ page }) => {
+  await page.goto('./#/tuner');
+  await page.getByRole('radio', { name: /^Short thumbs/ }).click();
+  await expect(page.getByText(/Now practising on Short thumbs/)).toBeVisible();
+  await page.getByRole('button', { name: 'Edit Short thumbs' }).click();
+  await expect(page.getByText(/Opened Short-thumbs/)).toBeVisible();
   await shot(page, 'preset');
-  await page.getByRole('button', { name: 'Open in Tuner' }).click();
-  await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
   await page.getByPlaceholder('Search by buttons or action').fill('grep');
   await expect(page.locator('.list')).toContainText('1M 2M 3R 4R');
   const dl = page.waitForEvent('download');
+  await page.getByRole('radiogroup', { name: 'Slot on the Twiddler' }).getByText('2').click();
   await page.getByRole('button', { name: /Download/ }).click();
-  expect((await dl).suggestedFilename()).toBe('Short-thumbs.cfg');
+  expect((await dl).suggestedFilename()).toBe('2.cfg');
   await page.goto('./#/chords');
   await page.keyboard.press('9');
   await expect(page.locator('.explore')).toContainText('0LLL');

@@ -95,4 +95,13 @@ describe('transfer', () => {
     const midway = { ...emptyProfile(5), lesson: 40, lessons: { '39': rec } };
     expect((await importText(JSON.stringify(midway))).lesson).toBe(40);
   });
+
+  it('loads a config saved before slots as slot 1, and keeps a chosen slot', async () => {
+    const old = { ...emptyProfile(5), config: { name: 'Mine', data: 'AAAA' } };
+    expect((await importText(JSON.stringify(old))).config).toEqual({ name: 'Mine', data: 'AAAA', slot: 1 });
+    const three = { ...emptyProfile(5), config: { name: 'Mine', data: 'AAAA', slot: 3 } };
+    expect((await importText(JSON.stringify(three))).config?.slot).toBe(3);
+    const bad = { ...emptyProfile(5), config: { name: 'Mine', data: 'AAAA', slot: 7 } };
+    expect((await importText(JSON.stringify(bad))).config?.slot).toBe(1);
+  });
 });

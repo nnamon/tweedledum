@@ -1,11 +1,12 @@
 <script lang="ts">
   import Icon from '../ui/Icon.svelte';
   import Segmented from '../ui/Segmented.svelte';
+  import Layouts from './Layouts.svelte';
   import { chordText } from '../lib/chords/chord';
   import { importLayout } from '../lib/chords/import';
-  import { keymap, store } from '../lib/state/app.svelte';
+  import { store } from '../lib/state/app.svelte';
   import {
-    ConfigError, DEDICATED, KEY_NAMES, THUMB_MODIFIERS, THUMB_NAMES, actionLabel, chordLabel, configFromLayout, fromBase64,
+    ConfigError, DEDICATED, KEY_NAMES, THUMB_MODIFIERS, THUMB_NAMES, actionLabel, chordLabel, fromBase64,
     has, keyChord, mirror, parseV7, readSettings, swapThumbs, textChord, textOf, toBase64, toggle, writeSettings, writeV7,
     type Button, type V7Chord, type V7Config, type V7Settings,
   } from '../lib/chords/v7';
@@ -24,6 +25,7 @@
 
   let cfg = $state<V7Config | null>(load());
   let name = $state(store.p.config?.name ?? '');
+  let slot = $state<1 | 2 | 3>(store.p.config?.slot ?? 1);
   let message = $state<{ text: string; ok: boolean } | null>(null);
   let query = $state('');
 
@@ -37,7 +39,7 @@
 
   function commit(next: V7Config) {
     cfg = next;
-    store.p.config = { name: name || 'Config', data: toBase64(writeV7(next)) };
+    store.p.config = { name: name || 'Config', data: toBase64(writeV7(next)), slot };
   }
 
   // ---- Opening and saving ----
@@ -57,16 +59,14 @@
     }
   }
 
-  function fromLayout() {
-    const km = keymap();
-    name = `${km.layout.name.replace(/[^\w-]+/g, '-')}`;
-    const next = configFromLayout(km.layout);
-    commit(next);
-    message = { text: `Started from ${km.layout.name}: ${next.chords.length} chords, with the Tuner's default settings and system chords.`, ok: true };
+  /** The Twiddler 4 reads its configs from 1.cfg, 2.cfg and 3.cfg. */
+  function fileName(): string {
+    return `${slot}.cfg`;
   }
 
-  function fileName(): string {
-    return `${(name || 'config').replace(/[^\w.-]+/g, '-')}.cfg`;
+  function setSlot(v: 1 | 2 | 3) {
+    slot = v;
+    if (cfg) commit(cfg);
   }
 
   function download() {
@@ -163,12 +163,17 @@
       : { text: `${profile.title}: ${r.report.placed.length} chords added or moved, ${r.report.removed.length} removed, ${r.report.moved.length} moved out of the way.`, ok: r.report.lost.length === 0 };
   }
 
-  function startWithProfile() {
-    fromLayout();
-    applyProfile();
+  let editorHead: HTMLElement | undefined = $state();
+
+  function editLayout(next: V7Config, nextName: string, note: string) {
+    if (cfg && !confirm(`Open ${nextName} in the config editor? It replaces ${name || 'the config'} that is open now. Download that first to keep it.`)) return;
+    name = nextName;
     undo = null;
-    name = `${name}-short-thumbs`;
-    if (cfg) commit(cfg);
+    report = null;
+    draft = null;
+    commit(next);
+    message = { text: `Opened ${nextName}: ${next.chords.length} chords. ${note}`, ok: true };
+    requestAnimationFrame(() => editorHead?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
 
   function pick(id: ChangeId, on: boolean) {
@@ -268,8 +273,13 @@
 
 <div class="screen wide">
   <h1 class="large-title">Tuner</h1>
+  <p class="lede">Choose the layout you practise on, and make a config file for your Twiddler 4.</p>
+
+  <Layouts onedit={editLayout} />
+
+  <h2 class="editor-head" bind:this={editorHead}>Config editor</h2>
   <p class="lede">
-    Edit a Twiddler 4 config file (version 7): its chords, thumb buttons and settings, or apply a profile that changes many chords at once. The file stays in this browser and in your progress. Download it when you're done and copy it to the Twiddler.
+    Change a Twiddler 4 config file (version 7): its chords, thumb buttons and settings, or apply a profile that changes many chords at once. The file stays in this browser and in your progress. Download it when you're done and copy it to the Twiddler.
   </p>
 
   {#if message}
@@ -282,16 +292,18 @@
   {#if !cfg || !s}
     <section class="section">
       <div class="group">
-        <label class="row"><span class="row-main"><span class="row-title link">Open a config file</span><span class="row-sub">A .cfg for the Twiddler 4, such as one downloaded from the Tuner.</span></span><input type="file" accept=".cfg" class="visually-hidden" onchange={openFile} /></label>
-        <button class="row" onclick={fromLayout}><span class="row-main"><span class="row-title link">Start from the layout in use</span><span class="row-sub">{keymap().layout.name}, with the Tuner's default settings and system chords. Shortcuts, arrows and function keys aren't part of a typing layout, so they aren't included.</span></span></button>
-        <button class="row" onclick={startWithProfile}><span class="row-main"><span class="row-title link">Start from the layout in use, for short thumbs</span><span class="row-sub">The same, with the {profile.title} profile applied: everything you type on the finger buttons, T3 as Control and T4 as Shift.</span></span></button>
+        <label class="row"><span class="row-main"><span class="row-title link">Open a config file</span><span class="row-sub">A .cfg for the Twiddler 4, such as one downloaded from Tek Gear's Tuner.</span></span><input type="file" accept=".cfg" class="visually-hidden" onchange={openFile} /></label>
       </div>
+      <p class="section-foot">Or press Edit on a layout above to start from it.</p>
     </section>
   {:else}
     <section class="section">
       <div class="group">
         <label class="row"><span class="row-main row-title">Name</span><input class="row-field" value={name} oninput={rename} aria-label="Config name" /></label>
         <div class="row"><span class="row-main row-title">Chords</span><span class="row-value">{cfg.chords.length}</span></div>
+        <div class="row"><span class="row-main"><span class="row-title">Slot on the Twiddler</span><span class="row-sub">The file is named for it. Copy it to the Twiddler to replace that slot's config.</span></span>
+          <Segmented label="Slot on the Twiddler" options={[{ value: 1, label: '1' }, { value: 2, label: '2' }, { value: 3, label: '3' }]} value={slot} onchange={(v: 1 | 2 | 3) => setSlot(v)} />
+        </div>
       </div>
       <div class="btn-row">
         <button class="btn primary" onclick={download}><Icon name="download" size={18} /> Download {fileName()}</button>
@@ -456,6 +468,14 @@
 </div>
 
 <style>
+  .editor-head {
+    margin-top: var(--tw-space-8);
+    padding: var(--tw-space-2) var(--tw-space-4);
+    font-size: var(--tw-text-title);
+    font-weight: var(--tw-weight-bold);
+    scroll-margin-top: var(--tw-space-4);
+  }
+
   .undo {
     margin-left: var(--tw-space-2);
   }

@@ -1,5 +1,10 @@
 # Version history
 
+## 0.3.2
+
+- Layouts are now chosen at the top of the Tuner tab instead of at the bottom of Settings. Tap a layout to practise on it; a tick shows the one in use. Each has an Edit button that opens it in the config editor below. Settings shows the layout in use and links there.
+- Choose the config slot on the Twiddler, 1, 2 or 3. The download is named for it: 1.cfg, 2.cfg or 3.cfg. The slot is saved with the config in your progress.
+
 ## 0.3.1
 
 - Added Short thumbs to Settings, Layout, Other layouts: the Twiddler default with the Short thumbs profile applied. Load it to practise on it, or open it in the Tuner to download it for the Twiddler.

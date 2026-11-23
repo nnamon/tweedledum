@@ -5,13 +5,9 @@
   import { keymap, replaceProfile, saveNow, store } from '../lib/state/app.svelte';
   import { emptyProfile } from '../lib/state/profile';
   import { exportCode, exportFile, importText, ImportError } from '../lib/state/transfer';
-  import { exportLayoutJson, importLayout, importLayoutText, LayoutError, type ImportResult } from '../lib/chords/import';
-  import { chordText } from '../lib/chords/chord';
   import { sayChars, sayText, speechAvailable, voices } from '../lib/audio/voice';
   import { RUNNING, isNewer, published, updateAndReload, type Published } from '../lib/app/update';
   import { go } from '../lib/app/router.svelte';
-  import { shortThumbsConfig } from '../lib/chords/profiles';
-  import { toBase64, writeV7 } from '../lib/chords/v7';
 
   const s = $derived(store.p.settings);
   const km = $derived(keymap());
@@ -88,89 +84,6 @@
     progressMsg = { ok: true, text: 'All progress in this browser was deleted.' };
   }
 
-  // ---- Layout ----
-  const BUNDLED = [
-    { file: 'tabspace.cfg', name: 'TabSpace' },
-    { file: 'mirrorwalk.cfg', name: 'MirrorWalk' },
-    { file: 'mirrorwalk_nomcc.cfg', name: 'MirrorWalk without multi-character chords' },
-    { file: 'delent.cfg', name: 'DelEnt' },
-    { file: 'teasan.cfg', name: 'TeaSan' },
-  ];
-  let layoutMsg = $state<{ ok: boolean; text: string } | null>(null);
-  let layoutText = $state('');
-
-  function apply(r: ImportResult, name?: string) {
-    store.p.layout = {
-      name: name ?? r.layout.name,
-      entries: r.layout.entries.map((e) => [chordText(e.chord), e.output]),
-      keys: (r.layout.keys ?? []).map((k) => [chordText(k.chord), k.name]),
-    };
-    const k = keymap();
-    const missing = k.missing('abcdefghijklmnopqrstuvwxyz0123456789 .,').filter((c) => c !== ' ');
-    layoutMsg = {
-      ok: true,
-      text:
-        `Loaded ${name ?? r.layout.name} (${r.format}): ${r.layout.entries.length} chords that type text.` +
-        (r.skipped ? ` ${r.skipped} other chords (shortcuts, keys, mouse, or two buttons in a row) were left out.` : '') +
-        (missing.length ? ` It has no chord for ${missing.join(' ')}.` : ''),
-    };
-  }
-
-  function fail(e: unknown) {
-    layoutMsg = { ok: false, text: e instanceof LayoutError ? e.message : 'That layout could not be read. Nothing was changed.' };
-  }
-
-  // Built here from the default layout, so no copy of the factory config ships with the app.
-  function shortThumbs() {
-    const cfg = shortThumbsConfig();
-    return { cfg, data: writeV7(cfg) };
-  }
-
-  function loadShortThumbs() {
-    apply(importLayout(shortThumbs().data, 'short-thumbs.cfg'), 'Short thumbs');
-  }
-
-  function openShortThumbs() {
-    if (store.p.config && !confirm(`Open Short thumbs in the Tuner? It replaces ${store.p.config.name}, which is open there now. Download that first to keep it.`)) return;
-    store.p.config = { name: 'Short-thumbs', data: toBase64(shortThumbs().data) };
-    go('tuner');
-  }
-
-  async function loadBundled(file: string, name: string) {
-    try {
-      const res = await fetch(`${import.meta.env.BASE_URL}layouts/${file}`);
-      if (!res.ok) throw new Error();
-      apply(importLayout(new Uint8Array(await res.arrayBuffer()), file), name);
-    } catch (e) {
-      fail(e instanceof LayoutError ? e : new LayoutError('That layout could not be loaded. Check your connection and try again.'));
-    }
-  }
-
-  async function loadLayoutFile(e: Event) {
-    const f = (e.target as HTMLInputElement).files?.[0];
-    (e.target as HTMLInputElement).value = '';
-    if (!f) return;
-    try {
-      apply(importLayout(new Uint8Array(await f.arrayBuffer()), f.name));
-    } catch (err) {
-      fail(err);
-    }
-  }
-
-  function loadLayoutText() {
-    try {
-      apply(importLayoutText(layoutText));
-      layoutText = '';
-    } catch (err) {
-      fail(err);
-    }
-  }
-
-  function useDefault() {
-    store.p.layout = null;
-    layoutMsg = { ok: true, text: 'Back to the Twiddler default layout.' };
-  }
-
   // ---- Version ----
   let site = $state<Published | null | 'checking'>('checking');
   let reloading = $state(false);
@@ -245,32 +158,8 @@
   <section class="section">
     <h2 class="section-head">Layout</h2>
     <div class="group">
-      <div class="row"><span class="row-main"><span class="row-title">{km.layout.name}</span><span class="row-sub">{km.layout.entries.length} chords that type text{store.p.layout ? '' : ', as the Twiddler 3 and 4 ship and the Typing Tutor teaches'}</span></span></div>
-      {#if store.p.layout}
-        <button class="row" onclick={useDefault}><span class="row-main row-title link">Use the Twiddler default</span></button>
-      {/if}
-      <label class="row"><span class="row-main row-title link">Load a layout file</span><span class="row-sub">.cfg, .csv or .json</span><input type="file" accept=".cfg,.csv,.json,.txt" class="visually-hidden" onchange={loadLayoutFile} /></label>
-      <button class="row" onclick={() => download(`${km.layout.name.replace(/[^\w-]+/g, '-')}.json`, exportLayoutJson(km.layout))}><span class="row-main row-title link">Save this layout as JSON</span></button>
-      <button class="row" onclick={() => go('tuner')}><span class="row-main"><span class="row-title link">Tuner</span><span class="row-sub">Edit a Twiddler 4 config: chords, thumb buttons, settings and profiles{store.p.config ? `. Open: ${store.p.config.name}` : ''}.</span></span><span class="row-chevron"><Icon name="chevron" size={13} /></span></button>
+      <button class="row" onclick={() => go('tuner')}><span class="row-main"><span class="row-title">{km.layout.name}</span><span class="row-sub">{km.layout.entries.length} chords that type text. Choose another layout, load your own or make a config file in the Tuner.</span></span><span class="row-chevron"><Icon name="chevron" size={13} /></span></button>
     </div>
-    <p class="section-foot">Reads Twiddler config files (version 4 for Twiddler 2, 5 for Twiddler 3, 7 for Twiddler 4), CSV exported from the Twiddler Tuner, and the Typing Tutor's JSON key map. Only chords that type text are used. The lessons were written for the default layout.</p>
-
-    <h3 class="section-head sub-head">Other layouts</h3>
-    <div class="group">
-      <div class="row preset">
-        <button class="row-main preset-load" onclick={loadShortThumbs}><span class="row-title link">Short thumbs</span><span class="row-sub">The Twiddler default for hands that can't reach T1 and T2: digits on 2L like a phone keypad, brackets and symbols on 1R and 1M, T3 as Control, T4 as Shift, and 24 word chords for English and the terminal.</span></button>
-        <button class="btn compact" onclick={openShortThumbs}>Open in Tuner</button>
-      </div>
-      {#each BUNDLED as b (b.file)}
-        <button class="row" onclick={() => loadBundled(b.file, b.name)}><span class="row-main row-title link">{b.name}</span></button>
-      {/each}
-    </div>
-    <p class="section-foot">Short thumbs is the Tuner's Short thumbs profile applied to the Twiddler default. Open it in the Tuner to download it for the Twiddler. The others are config files from Griatch's twiddler-configs (BSD licence). TabSpace is by Brandon Rhodes; DelEnt, TeaSan and this MirrorWalk config are by Griatch.</p>
-
-    <h3 class="section-head sub-head">Paste a layout</h3>
-    <textarea class="area" rows="4" bind:value={layoutText} placeholder={'"Thumbs","Fingers","Actions"\n"","1R","[KB]a"'} aria-label="Layout as CSV or JSON"></textarea>
-    <div class="btn-row top"><button class="btn" disabled={!layoutText.trim()} onclick={loadLayoutText}>Load pasted layout</button></div>
-    {#if layoutMsg}<p class="notice" class:ok={layoutMsg.ok} class:bad={!layoutMsg.ok} role="status">{layoutMsg.text}</p>{/if}
   </section>
 
   <section class="section">
@@ -398,19 +287,5 @@
 
   label.row {
     cursor: pointer;
-  }
-
-  .preset {
-    gap: var(--tw-space-3);
-  }
-
-  .preset-load {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0;
-    border: 0;
-    background: none;
-    text-align: left;
   }
 </style>
