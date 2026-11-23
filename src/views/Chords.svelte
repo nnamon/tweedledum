@@ -3,24 +3,62 @@
   import { formatChord, type Chord } from '../lib/chords/chord';
   import { keymap, store } from '../lib/state/app.svelte';
   import { keyChar } from '../lib/train/run';
-  import { charName, sayChar } from '../lib/audio/voice';
+  import { BURST_MS } from '../lib/train/drill';
+  import { addChar, addKey, keyLabel, pressesOf, type Burst, type Press } from '../lib/chords/presses';
+  import { charName, sayChar, sayText } from '../lib/audio/voice';
 
   const km = $derived(keymap());
   const settings = $derived(store.p.settings);
 
-  let selected = $state<{ out: string; chord: Chord | null; pressed: boolean } | null>(null);
+  /** What was pressed on the Twiddler, oldest first. */
+  let bursts = $state<Burst[]>([]);
+  let nextId = 0;
+  /** A chord picked from the lists, shown instead of the last press until the next key. */
+  let picked = $state<Press | null>(null);
   let say = $state(false);
+  let settle: ReturnType<typeof setTimeout> | null = null;
+
+  const presses = $derived(bursts.flatMap((b) => pressesOf(km, b)));
+  const history = $derived(presses.slice(-12).reverse());
+  const shown = $derived(picked ?? presses[presses.length - 1] ?? null);
+
+  const MODIFIERS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'CapsLock', 'NumLock', 'Fn', 'FnLock', 'Hyper', 'Super', 'OS']);
 
   function onKey(e: KeyboardEvent) {
-    if (e.target instanceof HTMLElement && e.target.closest('input, textarea, select, button')) {
-      if (e.key !== ' ') return;
+    // Typing into a field is not a Twiddler press. Buttons and switches don't count as fields, so
+    // tapping a chord in the list doesn't stop the page from listening.
+    const t = e.target;
+    if (t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLInputElement && t.type !== 'checkbox')) return;
+    if (MODIFIERS.has(e.key)) return;
+    const now = performance.now();
+    const ch = e.key === 'Enter' ? null : keyChar(e.key);
+    const mods = [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.metaKey && 'Cmd'].filter(Boolean).join('+');
+    if (ch !== null && !mods) {
+      e.preventDefault();
+      bursts = addChar(bursts, ch, now, nextId++);
+    } else {
+      const label = keyLabel(e.key) ?? (mods && ch ? ch.toUpperCase() : null);
+      if (!label) return;
+      if (e.key === ' ' || e.key === 'Enter') e.preventDefault();
+      bursts = addKey(bursts, mods ? `${mods}+${label}` : label, now, nextId++);
     }
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    const ch = keyChar(e.key);
-    if (ch === null) return;
-    e.preventDefault();
-    selected = { out: ch, chord: km.chordFor(ch), pressed: true };
-    if (say) void sayChar(ch, { rate: settings.voiceRate, voiceName: settings.voiceName });
+    if (bursts.length > 40) bursts = bursts.slice(-40);
+    picked = null;
+    if (settle) clearTimeout(settle);
+    settle = setTimeout(speak, BURST_MS + 20);
+  }
+
+  /** Says what the last burst typed once it has all arrived. */
+  function speak() {
+    const last = bursts[bursts.length - 1];
+    if (!say || !last || last.key !== undefined) return;
+    const o = { rate: settings.voiceRate, voiceName: settings.voiceName };
+    void (last.text.length === 1 ? sayChar(last.text, o) : sayText(last.text, o));
+  }
+
+  function clearHistory() {
+    bursts = [];
+    picked = null;
   }
 
   const groups = $derived.by(() => {
@@ -74,21 +112,34 @@
   <div class="layout">
     <div class="pad-col">
       <div class="explore group" aria-live="polite">
-        {#if selected}
-          <span class="out mono" class:multi={selected.out.length > 1}>{@render text(selected.out)}</span>
+        {#if shown}
+          <span class="out mono" class:multi={shown.text.length > 1}>{#if shown.key}{shown.text}{:else}{@render text(shown.text)}{/if}</span>
           <span class="desc">
-            {#if selected.out.length > 1}{spaceNote(selected.out)}{:else if charName(selected.out) !== selected.out}{charName(selected.out)}{/if}
-            {#if selected.chord}
-              <span class="mono chord">{formatChord(selected.chord, settings.notation)}</span>
+            {#if shown.key}Key{:else if shown.text.length > 1}{spaceNote(shown.text)}{:else if charName(shown.text) !== shown.text}{charName(shown.text)}{/if}
+            {#if shown.chord}
+              <span class="mono chord">{formatChord(shown.chord, settings.notation)}</span>
             {:else}
-              <span>The layout in use has no chord for this.</span>
+              <span>{shown.key ? 'No chord for this key in the layout in use.' : 'The layout in use has no chord for this.'}</span>
             {/if}
           </span>
         {:else}
           <span class="desc">Waiting for a key.</span>
         {/if}
       </div>
-      <Keypad {km} chord={selected?.chord ?? null} view={settings.view} hand={settings.hand} notation={settings.notation} />
+      <Keypad {km} chord={shown?.chord ?? null} view={settings.view} hand={settings.hand} notation={settings.notation} />
+      {#if history.length}
+        <section class="pressed" aria-label="Pressed">
+          <div class="pressed-head"><h2 class="section-head">Pressed, newest first</h2><button class="text-button" onclick={clearHistory}>Clear</button></div>
+          <div class="group">
+            {#each history as p, i (p.id)}
+              <button class="row press" class:latest={picked ? picked.id === p.id : i === 0} onclick={() => (picked = p)}>
+                <span class="row-main mono p-out">{#if p.key}{p.text}{:else}{@render text(p.text)}{/if}</span>
+                <span class="mono p-chord">{p.chord ? formatChord(p.chord, settings.notation) : 'no chord'}</span>
+              </button>
+            {/each}
+          </div>
+        </section>
+      {/if}
       <label class="row say"><span class="row-main row-title">Say keys aloud</span><input type="checkbox" role="switch" class="switch" bind:checked={say} /></label>
     </div>
 
@@ -100,8 +151,8 @@
             {#each g.items as e (e.output + formatChord(e.chord, 'classic'))}
               <button
                 class="chip"
-                class:on={selected?.out === e.output && !selected.pressed}
-                onclick={() => (selected = { out: e.output, chord: e.chord, pressed: false })}
+                class:on={picked?.text === e.output && !picked.key}
+                onclick={() => (picked = { id: 'pick', text: e.output, chord: e.chord })}
               >
                 <span class="c-out mono">{@render text(e.output)}</span>
                 <span class="c-chord mono">{formatChord(e.chord, settings.notation)}</span>
@@ -172,6 +223,47 @@
   .chord {
     font-size: var(--tw-text-body);
     color: var(--tw-label);
+  }
+
+  .pressed {
+    width: 100%;
+  }
+
+  .pressed-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: var(--tw-space-2);
+  }
+
+  .pressed-head .section-head {
+    padding-bottom: 0;
+  }
+
+  .press {
+    min-height: var(--tw-tap);
+  }
+
+  .press.latest {
+    background: var(--tw-accent-fill);
+    color: var(--tw-on-fill);
+  }
+
+  .press.latest .p-chord,
+  .press.latest .sp {
+    color: var(--tw-on-fill);
+  }
+
+  .p-out {
+    min-width: 0;
+    font-weight: var(--tw-weight-semibold);
+    overflow-wrap: anywhere;
+  }
+
+  .p-chord {
+    flex: none;
+    font-size: var(--tw-text-sub);
+    color: var(--tw-label2);
   }
 
   .say {

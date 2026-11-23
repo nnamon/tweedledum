@@ -64,6 +64,7 @@ test('progress code moves progress to a fresh browser', async ({ page, browser }
 
 test('chords screen shows the chord of a pressed key', async ({ page }) => {
   await page.goto('./#/chords');
+  await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('r');
   await expect(page.locator('.explore')).toContainText('MR00');
   await shot(page, 'chords');
@@ -98,6 +99,7 @@ test('a bundled layout loads and changes the chords', async ({ page }) => {
   await expect(page.getByRole('radio', { name: /^Twiddler default/ })).toHaveAttribute('aria-checked', 'false');
   await shot(page, 'layouts');
   await page.goto('./#/chords');
+  await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('e');
   // TabSpace types e with row 2 M alone.
   await expect(page.locator('.explore')).toContainText('0M00');
@@ -132,6 +134,7 @@ test('a Tuner config file loads and moves with the progress code', async ({ page
   await p2.getByRole('button', { name: 'Load code' }).click();
   await expect(p2.getByText(/Progress loaded/)).toBeVisible();
   await p2.goto('./#/chords');
+  await expect(p2.getByText('Waiting for a key.')).toBeVisible();
   await p2.keyboard.press('1');
   await expect(p2.locator('.explore')).toContainText('C+R000');
   await other.close();
@@ -185,6 +188,7 @@ test('the Tuner builds, swaps, edits and downloads a Twiddler 4 config', async (
 
   // Edits change what you practise on, with no extra step.
   await page.goto('./#/chords');
+  await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('1');
   await expect(page.locator('.explore')).toContainText('C+R000');
 });
@@ -212,6 +216,8 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await expect(page.getByText('Short thumbs: nothing to change.', { exact: false })).toBeVisible();
 
   await page.goto('./#/chords');
+
+  await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('1');
   await expect(page.locator('.explore')).toContainText('0LRR');
 });
@@ -287,6 +293,7 @@ test('the Short thumbs preset loads for practice and opens in the editor', async
   await page.getByRole('button', { name: /Download/ }).click();
   expect((await dl).suggestedFilename()).toBe('2.cfg');
   await page.goto('./#/chords');
+  await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('9');
   await expect(page.locator('.explore')).toContainText('0LLL');
 });
@@ -357,4 +364,23 @@ test('a config saved apart from the ticked layout is replaced by it', async ({ p
   await page.reload();
   await expect(page.getByLabel('Config name')).toHaveValue('Short thumbs');
   await expect(page.getByText(/The open config, Twiddler-default, was not the ticked layout/)).toBeVisible();
+});
+
+test('the Chords page keeps a history of presses, with a multi-character chord as one entry', async ({ page }) => {
+  await page.goto('./#/chords');
+  // Tapping a chord in the list leaves focus on its button; presses still count after that.
+  await page.getByRole('button', { name: /^b 0R00/ }).click();
+  await page.keyboard.type('the '); // one burst, as the Twiddler sends it
+  await page.waitForTimeout(200);
+  await page.keyboard.press('w');
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Backspace');
+  const rows = page.locator('.press');
+  await expect(rows).toHaveText([/^BS\s*00L0$/, /^w\s*M00M$/, /^the␣\s*0RR0$/]);
+  await expect(page.locator('.explore')).toContainText('BS');
+  await rows.nth(2).click();
+  await expect(page.locator('.explore')).toContainText('Ends with a space');
+  await shot(page, 'chords-pressed');
+  await page.getByRole('button', { name: 'Clear' }).click();
+  await expect(rows).toHaveCount(0);
 });

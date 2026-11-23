@@ -96,6 +96,11 @@ export class Keymap {
     return null;
   }
 
+  /** The chord for a key that types nothing, by its keypad label (ENT, BS), or null. */
+  chordForKey(name: string): Chord | null {
+    return (this.layout.keys ?? []).find((k) => k.name === name)?.chord ?? null;
+  }
+
   /** What a chord types, or null. */
   outputOf(c: Chord): string | null {
     return this.byChord.get(chordText(c)) ?? null;

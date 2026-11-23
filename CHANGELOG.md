@@ -1,5 +1,12 @@
 # Version history
 
+## 0.3.7
+
+- The Chords page keeps a history of what you press, newest first, with the chord for each. A multi-character chord shows as one entry ("the␣  0RR0"), not a flash of single letters.
+- Keys that type nothing, such as Backspace and the arrows, appear in the history too.
+- Tap an entry to show its chord on the keypad again.
+- Fixed: after tapping a chord in the lists, the page ignored Twiddler presses until you clicked elsewhere.
+
 ## 0.3.6
 
 - Ticking a layout in the Tuner makes it the config file too; before, the practice layout and the config file were chosen apart, so Download could save a different layout from the one ticked.
