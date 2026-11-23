@@ -30,7 +30,7 @@ const T2 = bitsOf('T2');
 const T3 = bitsOf('T3');
 const T4 = bitsOf('T4');
 const THUMB_BITS = T1 | T2 | T3 | T4 | bitsOf('T0');
-/** Thumb buttons the short-thumbs profile moves things off. T4 stays: it holds Shift. */
+/** Thumb buttons the SmallHands profile moves things off. T4 stays: it holds Shift. */
 const FAR = T1 | T2 | T3;
 
 /** Keys that type nothing, where the factory layout has them: [buttons, HID modifier, HID key]. */
@@ -52,6 +52,13 @@ export const DIGITS: [string, Button[]][] = [
   ['7', [...BARRE, '2R']], ['8', [...BARRE, '3R']], ['9', [...BARRE, '4R']],
   ['0', [...BARRE, '2L', '3L']],
 ];
+
+/**
+ * Where string chords on T4 go. The Twiddler holds Shift for as long as T4 is down, so a string
+ * chord on T4 types every letter in capitals: "The " came out as "THE ". "The " goes on its "the "
+ * chord with the little finger added; any other string on T4 moves to a free finger chord.
+ */
+export const OFF_T4: [string, Button[]][] = [['The ', ['2R', '3R', '4M']]];
 
 /** Brackets and the symbols that need a far thumb on the factory layout, on 1R or 1M with rows 3 and 4. */
 export const SYMBOLS: [string, Button[]][] = [
@@ -96,7 +103,7 @@ export const CHANGES: Record<ChangeId, Change> = {
   },
   thumbs: {
     id: 'thumbs', title: 'T3 holds Control, T4 holds Shift',
-    detail: 'Removes the chords on T3 alone',
+    detail: 'Removes the chords on T3 alone. "The " moves from T4 to 2R 3R 4M.',
   },
   words: {
     id: 'words', title: 'Common word chords',
@@ -106,8 +113,8 @@ export const CHANGES: Record<ChangeId, Change> = {
 
 export const PROFILES: Profile[] = [
   {
-    id: 'short-thumbs',
-    title: 'Short thumbs',
+    id: 'smallhands',
+    title: 'SmallHands',
     detail:
       "For hands that can't reach T1 and T2. Digit and symbol chords that use T1, T2 or T3 move to the fingers. " +
       "The word chords start with 1R and row 2, and each types its word and a space. They are the words that save the most typing in Peter Norvig's counts of English web text. " +
@@ -144,7 +151,7 @@ const show = (t: string) => (t === ' ' ? 'Space' : t);
 
 /**
  * Applies the changes in a fixed order: device functions, digits, symbols, words, then the thumb
- * modifiers, which remove what is left on T3 alone.
+ * modifiers, which remove what is left on T3 alone and move string chords off T4.
  */
 export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config; report: Report } {
   const want = new Set(ids);
@@ -160,6 +167,7 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
   if (want.has('digits')) DIGITS.forEach(([, b]) => reserved.add(bitsOf(...b)));
   if (want.has('symbols')) SYMBOLS.forEach(([, b]) => reserved.add(bitsOf(...b)));
   if (want.has('words')) wordSpots('1R').forEach((b) => reserved.add(b));
+  if (want.has('thumbs')) OFF_T4.forEach(([, b]) => reserved.add(bitsOf(...b)));
   const displaced: V7Chord[] = [];
 
   /** Puts the chord on its buttons, moving aside whatever was there unless it is a device function. */
@@ -230,6 +238,17 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
       chords = chords.filter((x) => x !== c);
       report.removed.push(describe(c));
     }
+    for (const c of chords.filter((c) => c.type === 7 && (c.bits & T4) !== 0)) {
+      chords = chords.filter((x) => x !== c);
+      const spot = OFF_T4.find(([t]) => t === textOf(c));
+      const bits = spot ? bitsOf(...spot[1]) : 0;
+      if (!spot || at(bits)) {
+        displaced.push(c);
+        continue;
+      }
+      chords.push({ ...c, bits });
+      report.moved.push(`${actionLabel(c)}: ${chordLabel(c.bits)} to ${chordLabel(bits)}`);
+    }
     const s = readSettings({ header, chords });
     s.thumbs[2] = 1;
     s.thumbs[3] = 2;
@@ -283,7 +302,7 @@ function fingerSpots(): number[] {
   return out.map((b) => b >>> 0);
 }
 
-/** The Short thumbs preset: the Twiddler default layout with the whole profile applied. */
-export function shortThumbsConfig(): V7Config {
+/** The SmallHands preset: the Twiddler default layout with the whole profile applied. */
+export function smallHandsConfig(): V7Config {
   return applyChanges(configFromLayout(DEFAULT_LAYOUT), PROFILES[0].changes.map((c) => c.id)).cfg;
 }

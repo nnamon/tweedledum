@@ -106,4 +106,11 @@ describe('transfer', () => {
     const edited = { ...emptyProfile(5), config: { name: 'Mine', data: 'AAAA', slot: 1, edited: true } };
     expect((await importText(JSON.stringify(edited))).config?.edited).toBe(true);
   });
+
+  it('renames Short thumbs, saved before 0.3.10, to SmallHands', async () => {
+    const old = { ...emptyProfile(5), config: { name: 'Short thumbs', data: 'AAAA' }, layout: { name: 'Short thumbs', entries: [], keys: [] } };
+    const p = await importText(JSON.stringify(old));
+    expect(p.config?.name).toBe('SmallHands');
+    expect(p.layout?.name).toBe('SmallHands');
+  });
 });

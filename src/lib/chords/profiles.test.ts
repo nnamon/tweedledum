@@ -8,11 +8,12 @@ const ALL = Object.keys(CHANGES) as ChangeId[];
 const T1 = 1;
 const T2 = 1 << 4;
 const T3 = 1 << 8;
+const T4 = 1 << 12;
 
 /** Every chord that types the text, as the Tuner names it. */
 const chordsFor = (cfg: V7Config, text: string) => cfg.chords.filter((c) => textOf(c) === text).map((c) => chordLabel(c.bits));
 
-describe('the short-thumbs profile', () => {
+describe('the SmallHands profile', () => {
   it('lists every change once', () => {
     expect(PROFILES[0].changes.map((c) => c.id).sort()).toEqual([...ALL].sort());
   });
@@ -34,6 +35,15 @@ describe('the short-thumbs profile', () => {
     expect(readSettings(cfg).thumbs.slice(2)).toEqual([1, 2]);
     // The result is a config the Tuner reads: it survives a write and a read.
     expect(writeV7(parseV7(writeV7(cfg)))).toEqual(writeV7(cfg));
+  });
+
+  it('moves string chords off T4, which holds Shift for every letter', () => {
+    // On T4, "The " came out of the Twiddler as "THE ".
+    const { cfg, report } = applyChanges(configFromLayout(DEFAULT_LAYOUT), ALL);
+    expect(chordsFor(cfg, 'The ')).toEqual(['2R 3R 4M']);
+    expect(chordsFor(cfg, 'the ')).toEqual(['2R 3R']);
+    expect(report.moved).toContain('"The ": T4 2R 3R to 2R 3R 4M');
+    expect(cfg.chords.filter((c) => c.type === 7 && (c.bits & T4) !== 0)).toEqual([]);
   });
 
   it('keeps every chord on its own buttons', () => {
@@ -67,11 +77,11 @@ describe('the short-thumbs profile', () => {
   });
 });
 
-describe('the Short thumbs preset', () => {
+describe('the SmallHands preset', () => {
   it('has the navigation keys, every character on the fingers or T4, and all 14 word chords', async () => {
-    const { shortThumbsConfig } = await import('./profiles');
+    const { smallHandsConfig } = await import('./profiles');
     const { actionLabel } = await import('./v7');
-    const cfg = shortThumbsConfig();
+    const cfg = smallHandsConfig();
     const labels = cfg.chords.map((c) => `${chordLabel(c.bits)} = ${actionLabel(c)}`);
     for (const l of ['2M 3R = Up', '2M 3M = Left', '2M 3L = Down', '2M 4M = Right', '2R 3R 4R = Home', '3R 4R = Page Up', '3L 4L = Page Down']) expect(labels).toContain(l);
     expect(labels).toContain('2L 3L 4L = End');
@@ -82,9 +92,9 @@ describe('the Short thumbs preset', () => {
     expect(new Set(bits).size).toBe(bits.length);
   });
 
-  const tuner = new URL('./fixtures/local/tuner-short-thumbs.cfg', import.meta.url);
+  const tuner = new URL('./fixtures/local/tuner-smallhands.cfg', import.meta.url);
   it.skipIf(!existsSync(tuner))("is byte for byte what Tek Gear's Tuner saves after reading it", async () => {
-    const { shortThumbsConfig } = await import('./profiles');
-    expect(Buffer.from(writeV7(shortThumbsConfig()))).toEqual(readFileSync(tuner));
+    const { smallHandsConfig } = await import('./profiles');
+    expect(Buffer.from(writeV7(smallHandsConfig()))).toEqual(readFileSync(tuner));
   });
 });

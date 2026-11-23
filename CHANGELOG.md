@@ -1,5 +1,10 @@
 # Version history
 
+## 0.3.10
+
+- Short thumbs is now called SmallHands. Progress saved under the old name keeps it ticked.
+- Fixed: "The " typed "THE " on the Twiddler 4. T4 holds Shift, and the Twiddler keeps Shift down for every letter of a chord on T4. In SmallHands, "The " is now 2R 3R 4M, the "the " chord with the little finger on 4M. Open the Tuner and download the config again.
+
 ## 0.3.9
 
 - Removed the terminal word chords (git, cd, ls, sudo, &&, |, ../, ~/, docker, grep) from the Short thumbs profile and layout. Short thumbs is now 118 chords; open the Tuner and download it again for the Twiddler.

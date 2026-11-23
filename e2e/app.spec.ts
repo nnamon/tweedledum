@@ -193,13 +193,13 @@ test('the Tuner builds, swaps, edits and downloads a Twiddler 4 config', async (
   await expect(page.locator('.explore')).toContainText('C+R000');
 });
 
-test('the Tuner applies the short-thumbs profile and can undo it', async ({ page }) => {
+test('the Tuner applies the SmallHands profile and can undo it', async ({ page }) => {
   await page.goto('./#/practice');
   await page.getByRole('link', { name: 'Tuner' }).first().click();
   await expect(page.getByRole('heading', { name: 'Tuner' })).toBeVisible();
   await page.getByLabel(/Common word chords/).uncheck();
   await page.getByRole('button', { name: 'Apply 5 changes' }).click();
-  await expect(page.getByText(/Short thumbs: \d+ chords added or moved/)).toBeVisible();
+  await expect(page.getByText(/SmallHands: \d+ chords added or moved/)).toBeVisible();
   await page.getByText(/^Added or moved/).click();
   await expect(page.locator('.report')).toContainText('1L 1M 1R 2L = 1');
   // Common word chords was switched off, so no word chord is added.
@@ -207,13 +207,13 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await shot(page, 'tuner-profile');
 
   await page.getByRole('button', { name: 'Undo' }).click();
-  await expect(page.getByText('Undid the Short thumbs profile.')).toBeVisible();
+  await expect(page.getByText('Undid the SmallHands profile.')).toBeVisible();
   await page.getByPlaceholder('Search by buttons or action').fill('1L 1M 1R 2L');
   await expect(page.locator('.list')).toContainText('No chords match');
 
   await page.getByRole('button', { name: 'Apply 5 changes' }).click();
   await page.getByRole('button', { name: 'Apply 5 changes' }).click();
-  await expect(page.getByText('Short thumbs: nothing to change.', { exact: false })).toBeVisible();
+  await expect(page.getByText('SmallHands: nothing to change.', { exact: false })).toBeVisible();
 
   await page.goto('./#/chords');
 
@@ -280,11 +280,11 @@ test('Settings shows the version', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Update and reload' })).toBeVisible();
 });
 
-test('the Short thumbs preset loads for practice and opens in the editor', async ({ page }) => {
+test('the SmallHands preset loads for practice and opens in the editor', async ({ page }) => {
   await page.goto('./#/tuner');
-  await page.getByRole('radio', { name: /^Short thumbs/ }).click();
-  await expect(page.getByRole('radio', { name: /^Short thumbs/ })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByText(/Switched to Short thumbs: 118 chords/)).toBeVisible();
+  await page.getByRole('radio', { name: /^SmallHands/ }).click();
+  await expect(page.getByRole('radio', { name: /^SmallHands/ })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByText(/Switched to SmallHands: 118 chords/)).toBeVisible();
   await shot(page, 'preset');
   await page.getByPlaceholder('Search by buttons or action').fill('about');
   await expect(page.locator('.list')).toContainText('1R 2M 3M 4M');
@@ -300,7 +300,7 @@ test('the Short thumbs preset loads for practice and opens in the editor', async
 
 test('the Chords page sorts multi-character chords and shows their spaces', async ({ page }) => {
   await page.goto('./#/tuner');
-  await page.getByRole('radio', { name: /^Short thumbs/ }).click();
+  await page.getByRole('radio', { name: /^SmallHands/ }).click();
   await page.goto('./#/chords');
   const words = page.locator('.list-section', { has: page.getByRole('heading', { name: 'Words and word parts' }) });
   await expect(words.locator('.chip').first()).toContainText('about␣');
@@ -322,13 +322,13 @@ test('the Chords page sorts multi-character chords and shows their spaces', asyn
 });
 
 test('ticking a layout makes it the config file', async ({ page }) => {
-  // Ticking Short thumbs used to change only the practice layout, so Download gave whatever config
+  // Ticking SmallHands used to change only the practice layout, so Download gave whatever config
   // was open before.
   await page.goto('./#/tuner');
-  await page.getByRole('radio', { name: /^Short thumbs/ }).click();
-  await expect(page.getByLabel('Config name')).toHaveValue('Short thumbs');
+  await page.getByRole('radio', { name: /^SmallHands/ }).click();
+  await expect(page.getByLabel('Config name')).toHaveValue('SmallHands');
   const dl = page.waitForEvent('download');
-  await page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 118 chords/ }).click();
+  await page.getByRole('button', { name: /Download 1\.cfg SmallHands, 118 chords/ }).click();
   const bytes = Buffer.concat(await (await (await dl).createReadStream()).toArray());
   // 1 on a row 1 barre with 2L (bitmask 0x8e, a key chord for HID 0x1e), and nothing on T1 1R.
   const chords = new Map<number, number>();
@@ -354,7 +354,7 @@ test('switching layouts asks before replacing changes, and Undo brings them back
 
 test('a config saved apart from the ticked layout is replaced by it', async ({ page }) => {
   // Before 0.3.6 the open config and the practice layout were chosen apart. A profile with the
-  // Twiddler default open and Short thumbs ticked opens Short thumbs.
+  // Twiddler default open and SmallHands ticked opens SmallHands.
   await page.goto('./#/tuner');
   await expect(page.getByLabel('Config name')).toHaveValue('Twiddler default');
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tweedledum.profile.v1') ?? '{}').config?.name)).toBe('Twiddler default');
@@ -362,13 +362,13 @@ test('a config saved apart from the ticked layout is replaced by it', async ({ p
   await page.addInitScript(() => {
     const p = JSON.parse(localStorage.getItem('tweedledum.profile.v1')!);
     if (p.config?.name !== 'Twiddler default') return;
-    p.layout = { name: 'Short thumbs', entries: [['ROOO', 'a']], keys: [] };
+    p.layout = { name: 'SmallHands', entries: [['ROOO', 'a']], keys: [] };
     p.config.name = 'Twiddler-default';
     delete p.config.edited;
     localStorage.setItem('tweedledum.profile.v1', JSON.stringify(p));
   });
   await page.reload();
-  await expect(page.getByLabel('Config name')).toHaveValue('Short thumbs');
+  await expect(page.getByLabel('Config name')).toHaveValue('SmallHands');
   await expect(page.getByText(/The open config, Twiddler-default, was not the ticked layout/)).toBeVisible();
 });
 
@@ -392,21 +392,21 @@ test('the Chords page keeps a history of presses, with a multi-character chord a
 });
 
 test('an unedited built-in layout saved by an older version is rebuilt on opening', async ({ page }) => {
-  // Short thumbs saved by 0.3.6 had digits on 2L. Opening the Tuner rebuilds it with this version's.
+  // SmallHands saved by 0.3.6 had digits on 2L. Opening the Tuner rebuilds it with this version's.
   await page.goto('./#/tuner');
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tweedledum.profile.v1') ?? '{}').config?.name)).toBe('Twiddler default');
   await page.addInitScript(() => {
     const p = JSON.parse(localStorage.getItem('tweedledum.profile.v1')!);
     if (p.config?.name !== 'Twiddler default') return;
-    // Keep the default's bytes but call it Short thumbs: a stale, unedited copy.
-    p.config.name = 'Short thumbs';
+    // Keep the default's bytes but call it SmallHands: a stale, unedited copy.
+    p.config.name = 'SmallHands';
     p.config.edited = false;
-    p.layout = { name: 'Short thumbs', entries: [['ROOO', 'a']], keys: [] };
+    p.layout = { name: 'SmallHands', entries: [['ROOO', 'a']], keys: [] };
     localStorage.setItem('tweedledum.profile.v1', JSON.stringify(p));
   });
   await page.reload();
-  await expect(page.getByText(/Short thumbs changed in this version/)).toBeVisible();
-  await expect(page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 118 chords/ })).toBeVisible();
+  await expect(page.getByText(/SmallHands changed in this version/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Download 1\.cfg SmallHands, 118 chords/ })).toBeVisible();
   await page.goto('./#/chords');
   await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('1');

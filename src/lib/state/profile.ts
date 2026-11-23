@@ -270,6 +270,9 @@ export function normaliseProfile(raw: unknown): Profile {
       keys: Array.isArray(raw.layout.keys) ? (raw.layout.keys as unknown[]).filter(isPair) : [],
     };
   }
+  // SmallHands was called Short thumbs until 0.3.10. Renaming it keeps it ticked in the Tuner.
+  if (p.config?.name === 'Short thumbs') p.config.name = 'SmallHands';
+  if (p.layout?.name === 'Short thumbs') p.layout.name = 'SmallHands';
   // Lesson 69 was the last until 0.1.4 added more, so finishing it moved nobody on.
   if (p.lesson === 69 && p.lessons['69']) p.lesson = 70;
   return p;

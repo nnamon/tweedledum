@@ -25,7 +25,7 @@ During a run the keypad picture lights the next chord, drawn from the layout you
 
 ## Layouts
 
-The default layout is the one the Twiddler 3 and 4 ship with, and the one the Typing Tutor teaches. Pick another at the top of the Tuner tab. The ticked layout is both what you practise on and the config file you download for the Twiddler. Short thumbs, TabSpace, MirrorWalk, DelEnt and TeaSan are built in, and Open a layout file reads your own:
+The default layout is the one the Twiddler 3 and 4 ship with, and the one the Typing Tutor teaches. Pick another at the top of the Tuner tab. The ticked layout is both what you practise on and the config file you download for the Twiddler. SmallHands, TabSpace, MirrorWalk, DelEnt and TeaSan are built in, and Open a layout file reads your own:
 
 - A Twiddler config file: version 4 (Twiddler 2), 5 (Twiddler 3) or 7 (Twiddler 4).
 - A CSV exported by the Twiddler Tuner.
@@ -39,7 +39,7 @@ The Tuner tab edits Twiddler 4 config files (version 7) in the browser. The conf
 
 The Twiddler 4 reads its configs from `1.cfg`, `2.cfg` and `3.cfg`. Pick the slot before you download and the file gets that name, so you can copy it straight across.
 
-The Short thumbs profile is for hands that can't reach T1 and T2. Digits go on a row 1 barre, one finger across 1L, 1M and 1R: then 2L, 3L and 4L type 1 to 3, the M column 4 to 6, the R column 7 to 9, and 2L with 3L types 0. Tek Gear's Tuner reads the barre and shows it as `1|`. The brackets and symbols that needed a far thumb go on 1R and 1M. T3 then holds Control and T4 holds Shift. It also adds word chords for the 14 words that save the most typing in Peter Norvig's counts of English web text, and the factory navigation keys when a config has none. The report lists what was added, moved and removed, and warns about anything you can no longer type; Undo takes the whole profile back. The Short thumbs practice layout is the Twiddler default with the profile applied, built in the browser so the factory file stays out of the repository.
+The SmallHands profile is for hands that can't reach T1 and T2. Digits go on a row 1 barre, one finger across 1L, 1M and 1R: then 2L, 3L and 4L type 1 to 3, the M column 4 to 6, the R column 7 to 9, and 2L with 3L types 0. Tek Gear's Tuner reads the barre and shows it as `1|`. The brackets and symbols that needed a far thumb go on 1R and 1M. T3 then holds Control and T4 holds Shift. The Twiddler holds Shift for every letter of a string chord on T4, so "The " moves from T4 2R 3R to 2R 3R 4M: the "the " chord with the little finger added. It also adds word chords for the 14 words that save the most typing in Peter Norvig's counts of English web text, and the factory navigation keys when a config has none. The report lists what was added, moved and removed, and warns about anything you can no longer type; Undo takes the whole profile back. The SmallHands practice layout is the Twiddler default with the profile applied, built in the browser so the factory file stays out of the repository.
 
 Every file the editor has been tested against comes back byte for byte when opened and saved: the 18 test files from nevinera/twiddling, the factory file and two Tuner downloads, one with more than 255 bytes of multi-character strings. The format follows nevinera/twiddling's description of it, since Tek Gear hasn't published one for version 7.
 
