@@ -152,8 +152,21 @@
   // A config that doesn't match the ticked layout (saved by 0.3.4 or earlier, when they were
   // chosen apart) is replaced by the ticked layout's config. Undo brings it back.
   onMount(async () => {
-    if (cfg && name === current) return;
     const preset = PRESETS.find((p) => p.name === current);
+    // An unedited built-in layout is rebuilt, so a change to it in a new version reaches you.
+    if (cfg && name === current && !edited && preset) {
+      const before = cfg;
+      try {
+        const { cfg: next } = await presetConfig(preset);
+        if (toBase64(writeV7(next)) !== toBase64(writeV7(before))) {
+          select(next, current, `${current} changed in this version, so the config was rebuilt. Download it again for the Twiddler.`);
+        }
+      } catch {
+        // Offline: keep the saved copy.
+      }
+      return;
+    }
+    if (cfg && name === current) return;
     const old = cfg ? { name } : null;
     busy = true;
     try {

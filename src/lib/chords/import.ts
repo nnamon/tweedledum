@@ -7,15 +7,15 @@
 //
 // Only chords that type text are kept: letters, digits, punctuation, space, and strings of them.
 // Chords for Ctrl or Alt shortcuts, arrows, function keys and mouse actions are counted and
-// skipped. Chords holding two buttons in one row are skipped too: the keypad picture and the
-// lessons use one button per row.
+// skipped. Chords holding two of a row's three buttons are skipped too: the keypad picture and
+// the lessons know one button per row, or all three as a barre.
 //
 // The binary formats follow the open-source parsers listed in THIRD_PARTY_NOTICES.md. All
 // integers are little-endian; keys are USB HID usage codes. The chord bitmask is the same in
 // every version: bit 0 T1 (NUM), 1 row 1 R, 2 row 1 M, 3 row 1 L, 4 T2 (ALT), 5 to 7 row 2 R M L,
 // 8 T3 (CTRL), 9 to 11 row 3, 12 T4 (SHIFT), 13 to 15 row 4.
 
-import { type Cell, type Chord, type Thumb, chordText, parseChord } from './chord';
+import { type Cell, type Chord, type Col, type Thumb, cellOf, chordText, parseChord } from './chord';
 import type { Entry, Layout } from './layout';
 
 export interface ImportResult {
@@ -66,16 +66,16 @@ export function hidChar(mod: number, key: number): string | null {
 
 const THUMB_BITS: [Thumb, number][] = [['N', 0], ['A', 4], ['C', 8], ['S', 12]];
 
-/** A chord from the config bitmask, or null when it holds two buttons in a row or extra buttons. */
+/** A chord from the config bitmask, or null when it holds two of a row's three buttons or extra buttons. */
 export function chordFromBits(bits: number): Chord | null {
   if (bits >>> 16) return null;
   const thumbs = THUMB_BITS.filter(([, b]) => (bits >> b) & 1).map(([t]) => t);
   const rows: Cell[] = [];
   for (let r = 0; r < 4; r++) {
     const base = 1 + 4 * r;
-    const held = (['R', 'M', 'L'] as const).filter((_, i) => (bits >> (base + i)) & 1);
-    if (held.length > 1) return null;
-    rows.push(held[0] ?? 'O');
+    const cell = cellOf(new Set((['R', 'M', 'L'] as const).filter((_, i) => (bits >> (base + i)) & 1)));
+    if (cell === null) return null;
+    rows.push(cell);
   }
   if (rows.every((x) => x === 'O')) return null;
   return { rows: rows as Chord['rows'], thumbs };
@@ -296,15 +296,14 @@ function chordFromT4(thumbs: string, fingers: string): Chord | null {
     if (!th) return null;
     t.push(th);
   }
-  const rows: Cell[] = ['O', 'O', 'O', 'O'];
+  const held: Set<Col>[] = [new Set(), new Set(), new Set(), new Set()];
   for (const part of fingers.trim().toUpperCase().split(/\s+/).filter(Boolean)) {
     const m = /^F?([1-4])([LMR])$/.exec(part);
     if (!m) return null;
-    const r = Number(m[1]) - 1;
-    if (rows[r] !== 'O') return null;
-    rows[r] = m[2] as Cell;
+    held[Number(m[1]) - 1].add(m[2] as Col);
   }
-  if (rows.every((x) => x === 'O')) return null;
+  const rows = held.map(cellOf);
+  if (rows.some((x) => x === null) || rows.every((x) => x === 'O')) return null;
   return parseChord([...t, rows.join('')].join('+'));
 }
 

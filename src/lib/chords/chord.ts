@@ -1,14 +1,16 @@
 // A chord: which finger button is held in each of the four rows, and which thumb buttons.
 //
 // The finger buttons sit in four rows (row 1 under the index finger, row 4 under the little
-// finger) of three columns, named L, M and R. A row with no button held is O. A chord is written
-// as four letters, one per row, from row 1 to row 4: "LROO" holds L on row 1 and R on row 2.
+// finger) of three columns, named L, M and R. A row with no button held is O, and a row with
+// all three held at once (a barre, one finger across the row) is B. A chord is written as four letters, one per row, from row 1 to row 4: "LROO" holds L on row 1 and R on row 2.
 // Thumb buttons are written first and joined with "+": "N+ROOO" is NUM with R on row 1.
 //
-// This is the notation of the Tek Gear Typing Tutor. Zero is read as O, so "0R00" is "OROO".
+// This is the notation of the Tek Gear Typing Tutor, which has no barre; B is ours. Zero is read
+// as O, so "0R00" is "OROO".
 
 export type Col = 'L' | 'M' | 'R';
-export type Cell = Col | 'O';
+/** A row: one button, none (O), or all three (B, a barre). */
+export type Cell = Col | 'O' | 'B';
 /** Thumb buttons: NUM, ALT, CTRL and SHIFT. */
 export type Thumb = 'N' | 'A' | 'C' | 'S';
 
@@ -41,7 +43,7 @@ function sortThumbs(t: Iterable<Thumb>): Thumb[] {
  */
 export function parseChord(text: string): Chord | null {
   let s = text.trim().toUpperCase();
-  if (/(^|\s)F[1-4][LMR]/.test(s)) return parseT4(s);
+  if (/(^|\s)F[1-4][LMRB]/.test(s)) return parseT4(s);
   if (s.startsWith('MC-')) s = s.slice(3);
   const thumbs: Thumb[] = [];
   const parts = s.split(/[+\s]+/).filter(Boolean);
@@ -62,15 +64,15 @@ export function parseChord(text: string): Chord | null {
     if (p === 'O') continue;
     return null;
   }
-  if (!/^[OLMR]{4}$/.test(rowsText)) return null;
+  if (!/^[OLMRB]{4}$/.test(rowsText)) return null;
   const rows = rowsText.split('') as Chord['rows'];
   if (rows.every((r) => r === 'O') && thumbs.length === 0) return null;
   return { rows, thumbs: sortThumbs(thumbs) };
 }
 
-/** Reads the Twiddler 4 notation: "T1 F1R F2M", "T14 F1R", "F1L F2R". */
+/** Reads the Twiddler 4 notation: "T1 F1R F2M", "T14 F1R", "F1L F2R", and "F1B" or "F1L F1M F1R" for a barre. */
 function parseT4(s: string): Chord | null {
-  const rows: Cell[] = ['O', 'O', 'O', 'O'];
+  const held: Set<Col>[] = [new Set(), new Set(), new Set(), new Set()];
   const thumbs: Thumb[] = [];
   const nums: Record<string, Thumb> = { '1': 'N', '2': 'A', '3': 'C', '4': 'S' };
   for (const part of s.split(/[\s+]+/).filter(Boolean)) {
@@ -79,14 +81,27 @@ function parseT4(s: string): Chord | null {
       for (const d of t[1]) thumbs.push(nums[d]);
       continue;
     }
-    const f = /^F([1-4])([LMR])$/.exec(part);
+    const f = /^F([1-4])([LMRB])$/.exec(part);
     if (!f) return null;
     const r = Number(f[1]) - 1;
-    if (rows[r] !== 'O') return null;
-    rows[r] = f[2] as Col;
+    for (const c of f[2] === 'B' ? COLS : [f[2] as Col]) held[r].add(c);
   }
-  if (rows.every((x) => x === 'O')) return null;
+  const rows = held.map(cellOf);
+  if (rows.some((x) => x === null) || rows.every((x) => x === 'O')) return null;
   return { rows: rows as Chord['rows'], thumbs: sortThumbs(thumbs) };
+}
+
+/** The cell for the buttons held in one row, or null for two of the three, which a chord can't hold. */
+export function cellOf(held: Set<Col>): Cell | null {
+  if (held.size === 0) return 'O';
+  if (held.size === 3) return 'B';
+  if (held.size === 1) return [...held][0];
+  return null;
+}
+
+/** The columns a cell holds. */
+export function colsOf(cell: Cell): Col[] {
+  return cell === 'O' ? [] : cell === 'B' ? [...COLS] : [cell];
 }
 
 export function chordText(c: Chord): string {
@@ -106,7 +121,7 @@ export function withThumb(c: Chord, t: Thumb): Chord {
 export function fingerKeys(c: Chord): string[] {
   const out: string[] = [];
   c.rows.forEach((cell, i) => {
-    if (cell !== 'O') out.push(`${i + 1}${cell}`);
+    for (const col of colsOf(cell)) out.push(`${i + 1}${col}`);
   });
   return out;
 }
@@ -121,7 +136,8 @@ export function chordWords(c: Chord): string {
   const names: Record<Col, string> = { L: 'left', M: 'middle', R: 'right' };
   const parts = c.thumbs.map((t) => THUMB_NAMES[t]);
   c.rows.forEach((cell, i) => {
-    if (cell !== 'O') parts.push(`row ${i + 1} ${names[cell]}`);
+    if (cell === 'B') parts.push(`row ${i + 1} all three`);
+    else if (cell !== 'O') parts.push(`row ${i + 1} ${names[cell]}`);
   });
   return parts.join(', ');
 }

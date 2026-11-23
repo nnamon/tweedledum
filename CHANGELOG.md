@@ -1,5 +1,11 @@
 # Version history
 
+## 0.3.8
+
+- Short thumbs digits are on a row 1 barre: hold 1L, 1M and 1R with one finger, then 2L 3L 4L for 1 2 3, the M column for 4 5 6, the R column for 7 8 9, and 2L 3L for 0. Tek Gear's Tuner reads the file unchanged.
+- Chords with all three buttons of a row held now show on the Chords page and in lessons, written B (F1B in Twiddler 4 notation). They used to be dropped from practice.
+- An unedited built-in layout is rebuilt when the Tuner opens, so changes like this one reach a config saved by an older version. Download it again for the Twiddler.
+
 ## 0.3.7
 
 - The Chords page keeps a history of what you press, newest first, with the chord for each. A multi-character chord shows as one entry ("the␣  0RR0"), not a flash of single letters.

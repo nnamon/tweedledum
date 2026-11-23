@@ -61,6 +61,8 @@
     picked = null;
   }
 
+  const hasBarre = $derived(km.layout.entries.some((e) => e.chord.rows.includes('B')));
+
   const groups = $derived.by(() => {
     const singles = km.layout.entries.filter((e) => e.output.length === 1);
     const letters = singles.filter((e) => /[a-z]/.test(e.output)).sort((a, b) => a.output.localeCompare(b.output));
@@ -108,6 +110,7 @@
 <div class="screen wide">
   <h1 class="large-title">Chords</h1>
   <p class="lede">{km.layout.name}, {km.layout.entries.length} chords that type text. Press a key on your Twiddler to see its chord, or pick one below.</p>
+  {#if hasBarre}<p class="lede">{settings.notation === 't4' ? 'F1B' : 'B'} is a barre: all three buttons of a row held with one finger.</p>{/if}
 
   <div class="layout">
     <div class="pad-col">

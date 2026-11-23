@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { chordT4, chordText, parseChord } from './chord';
+import { chordT4, chordText, fingerKeys, parseChord } from './chord';
+import { chordFromBits } from './import';
 import { DEFAULT_LAYOUT, Keymap } from './layout';
 import { LESSONS } from '../lessons/lessons';
 
@@ -58,5 +59,23 @@ describe('default layout', () => {
     expect(km.multiAt('and', 0)?.output).toBe('and ');
     expect(km.multiAt('sinks', 1)?.output).toBe('in');
     expect(km.multiAt('sing', 1)?.output).toBe('ing ');
+  });
+});
+
+describe('a barre', () => {
+  it('reads and writes a row with all three buttons held', () => {
+    const c = parseChord('BLOO')!;
+    expect(c.rows).toEqual(['B', 'L', 'O', 'O']);
+    expect(chordText(c)).toBe('BLOO');
+    expect(chordT4(c)).toBe('F1B F2L');
+    expect(fingerKeys(c)).toEqual(['1L', '1M', '1R', '2L']);
+    expect(parseChord('F1L F1M F1R F2L')).toEqual(c);
+    expect(parseChord('F1B F2L')).toEqual(c);
+  });
+
+  it('comes from a config bitmask with all three of a row, but not two', () => {
+    expect(chordFromBits(0x8e)?.rows).toEqual(['B', 'L', 'O', 'O']);
+    expect(chordFromBits(0x86)).toBeNull();
+    expect(parseChord('F1L F1M F2L')).toBeNull();
   });
 });

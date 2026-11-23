@@ -19,9 +19,10 @@ describe('the short-thumbs profile', () => {
 
   it('puts digits, symbols and words on the fingers of the default layout', () => {
     const { cfg, report } = applyChanges(configFromLayout(DEFAULT_LAYOUT), ALL);
-    expect(chordsFor(cfg, '1')).toEqual(['2L 3R 4R']);
-    expect(chordsFor(cfg, '9')).toEqual(['2L 3L 4L']);
-    expect(chordsFor(cfg, '0')).toEqual(['2L 4R']);
+    expect(chordsFor(cfg, '1')).toEqual(['1L 1M 1R 2L']);
+    expect(chordsFor(cfg, '5')).toEqual(['1L 1M 1R 3M']);
+    expect(chordsFor(cfg, '9')).toEqual(['1L 1M 1R 4R']);
+    expect(chordsFor(cfg, '0')).toEqual(['1L 1M 1R 2L 3L']);
     expect(chordsFor(cfg, '[')).toEqual(['1R 3R 4L']);
     expect(chordsFor(cfg, '~')).toEqual(['1M 3R 4L']);
     expect(chordsFor(cfg, 'for ')).toEqual(['1R 2R 3R 4M']);
@@ -60,9 +61,9 @@ describe('the short-thumbs profile', () => {
   it.skipIf(!existsSync(t3num))('moves a Tuner download with digits on T3 onto the fingers', () => {
     const { cfg, report } = applyChanges(parseV7(new Uint8Array(readFileSync(t3num))), ALL);
     expect(report.lost).toEqual([]);
-    // End was on 2L 3L 4L, where 9 goes.
-    expect(report.moved).toEqual(['End: 2L 3L 4L to 2L 3M']);
-    expect(chordsFor(cfg, '5')).toEqual(['2L 3M 4M']);
+    // The barre digits land on free spots, so nothing has to move.
+    expect(report.moved).toEqual([]);
+    expect(chordsFor(cfg, '5')).toEqual(['1L 1M 1R 3M']);
   });
 });
 
@@ -73,9 +74,8 @@ describe('the Short thumbs preset', () => {
     const cfg = shortThumbsConfig();
     const labels = cfg.chords.map((c) => `${chordLabel(c.bits)} = ${actionLabel(c)}`);
     for (const l of ['2M 3R = Up', '2M 3M = Left', '2M 3L = Down', '2M 4M = Right', '2R 3R 4R = Home', '3R 4R = Page Up', '3L 4L = Page Down']) expect(labels).toContain(l);
-    // End was on 2L 3L 4L, where 9 goes, and moved out of the way.
-    expect(labels.filter((l) => l.endsWith('= End'))).toHaveLength(1);
-    expect(chordsFor(cfg, '9')).toEqual(['2L 3L 4L']);
+    expect(labels).toContain('2L 3L 4L = End');
+    expect(chordsFor(cfg, '9')).toEqual(['1L 1M 1R 4R']);
     for (const w of [...COMMON_WORDS, ...TERMINAL_WORDS]) expect(chordsFor(cfg, w), w).toHaveLength(1);
     expect(cfg.chords.filter((c) => c.type !== 1 && (c.bits & (T1 | T2 | T3)) !== 0)).toEqual([]);
     const bits = cfg.chords.map((c) => c.bits);

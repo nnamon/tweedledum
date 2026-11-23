@@ -52,7 +52,7 @@
   const T4_NUM: Record<Thumb, string> = { N: 'T1', A: 'T2', C: 'T3', S: 'T4' };
 
   function held(c: Chord | null, row: number, col: Col): boolean {
-    return !!c && c.rows[row - 1] === col;
+    return !!c && (c.rows[row - 1] === col || c.rows[row - 1] === 'B');
   }
 
   function show(s: string | null | undefined): string {

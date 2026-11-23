@@ -41,12 +41,16 @@ export const NAV_KEYS: [Button[], number, number][] = [
   [['1M', '2M', '4M'], 0, 0x2b], [['T4', '1M', '2M', '4M'], 0x02, 0x2b],
 ];
 
-/** Digits on the fingers: hold 2L, and rows 3 and 4 pick the digit as on a phone keypad. */
+/**
+ * Digits on a row 1 barre: one finger across 1L, 1M and 1R, then the digit as on a phone keypad
+ * turned on its side. Column L is 1 to 3, M is 4 to 6, R is 7 to 9, down rows 2 to 4.
+ */
+const BARRE: Button[] = ['1L', '1M', '1R'];
 export const DIGITS: [string, Button[]][] = [
-  ['1', ['2L', '3R', '4R']], ['2', ['2L', '3R', '4M']], ['3', ['2L', '3R', '4L']],
-  ['4', ['2L', '3M', '4R']], ['5', ['2L', '3M', '4M']], ['6', ['2L', '3M', '4L']],
-  ['7', ['2L', '3L', '4R']], ['8', ['2L', '3L', '4M']], ['9', ['2L', '3L', '4L']],
-  ['0', ['2L', '4R']],
+  ['1', [...BARRE, '2L']], ['2', [...BARRE, '3L']], ['3', [...BARRE, '4L']],
+  ['4', [...BARRE, '2M']], ['5', [...BARRE, '3M']], ['6', [...BARRE, '4M']],
+  ['7', [...BARRE, '2R']], ['8', [...BARRE, '3R']], ['9', [...BARRE, '4R']],
+  ['0', [...BARRE, '2L', '3L']],
 ];
 
 /** Brackets and the symbols that need a far thumb on the factory layout, on 1R or 1M with rows 3 and 4. */
@@ -86,8 +90,8 @@ export const CHANGES: Record<ChangeId, Change> = {
     detail: 'On the factory chords. Only keys the config has no chord for are added.',
   },
   digits: {
-    id: 'digits', title: 'Digits on 2L',
-    detail: 'Rows 3 and 4 as a phone keypad: 3R 4R is 1, 3L 4L is 9, 4R alone is 0',
+    id: 'digits', title: 'Digits on a row 1 barre',
+    detail: 'Hold 1L 1M 1R together, then 2L 3L 4L for 1 2 3, 2M 3M 4M for 4 5 6, 2R 3R 4R for 7 8 9, and 2L 3L for 0',
   },
   symbols: {
     id: 'symbols', title: 'Brackets and symbols on 1R and 1M',

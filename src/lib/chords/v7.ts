@@ -23,7 +23,7 @@
 // Bitmask: bit 0 T1, 1 to 3 row 1 R M L, 4 T2, 5 to 7 row 2, 8 T3, 9 to 11 row 3, 12 T4, 13 to 15
 // row 4, 16 to 18 the mini-buttons 0L 0M 0R, 19 T0 (the Tuner shows it as T0).
 
-import type { Chord } from './chord';
+import { colsOf, type Chord } from './chord';
 import { hidChar, keyFor } from './import';
 import type { Layout } from './layout';
 
@@ -344,7 +344,7 @@ export function chordBits(c: Chord): number {
   let bits = 0;
   for (const t of c.thumbs) bits |= 1 << BUTTON_BIT[THUMB_BUTTON[t]];
   c.rows.forEach((cell, i) => {
-    if (cell !== 'O') bits |= 1 << BUTTON_BIT[`${i + 1}${cell}` as Button];
+    for (const col of colsOf(cell)) bits |= 1 << BUTTON_BIT[`${i + 1}${col}` as Button];
   });
   return bits >>> 0;
 }

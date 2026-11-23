@@ -201,14 +201,14 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
   await page.getByRole('button', { name: 'Apply 6 changes' }).click();
   await expect(page.getByText(/Short thumbs: \d+ chords added or moved/)).toBeVisible();
   await page.getByText(/^Added or moved/).click();
-  await expect(page.locator('.report')).toContainText('2L 3R 4R = 1');
+  await expect(page.locator('.report')).toContainText('1L 1M 1R 2L = 1');
   await expect(page.locator('.report')).toContainText('"for "');
   await expect(page.locator('.report')).not.toContainText('"git "');
   await shot(page, 'tuner-profile');
 
   await page.getByRole('button', { name: 'Undo' }).click();
   await expect(page.getByText('Undid the Short thumbs profile.')).toBeVisible();
-  await page.getByPlaceholder('Search by buttons or action').fill('2L 3R 4R');
+  await page.getByPlaceholder('Search by buttons or action').fill('1L 1M 1R 2L');
   await expect(page.locator('.list')).toContainText('No chords match');
 
   await page.getByRole('button', { name: 'Apply 6 changes' }).click();
@@ -219,7 +219,7 @@ test('the Tuner applies the short-thumbs profile and can undo it', async ({ page
 
   await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('1');
-  await expect(page.locator('.explore')).toContainText('0LRR');
+  await expect(page.locator('.explore')).toContainText('BL00');
 });
 
 test('left hand mirrors the keypad picture and keeps the chords', async ({ page }) => {
@@ -295,7 +295,7 @@ test('the Short thumbs preset loads for practice and opens in the editor', async
   await page.goto('./#/chords');
   await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('9');
-  await expect(page.locator('.explore')).toContainText('0LLL');
+  await expect(page.locator('.explore')).toContainText('B00R');
 });
 
 test('the Chords page sorts multi-character chords and shows their spaces', async ({ page }) => {
@@ -324,10 +324,10 @@ test('ticking a layout makes it the config file', async ({ page }) => {
   const dl = page.waitForEvent('download');
   await page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 128 chords/ }).click();
   const bytes = Buffer.concat(await (await (await dl).createReadStream()).toArray());
-  // 1 on 2L 3R 4R (bitmask 0x2280, a key chord for HID 0x1e), and nothing on T1 1R.
+  // 1 on a row 1 barre with 2L (bitmask 0x8e, a key chord for HID 0x1e), and nothing on T1 1R.
   const chords = new Map<number, number>();
   for (let o = 128; o + 8 <= 128 + 8 * bytes.readUInt16LE(8); o += 8) chords.set(bytes.readUInt32LE(o), bytes.readUInt16LE(o + 6));
-  expect(chords.get(0x2280)).toBe(0x1e);
+  expect(chords.get(0x8e)).toBe(0x1e);
   expect(chords.has(0x0003)).toBe(false);
 });
 
@@ -383,4 +383,28 @@ test('the Chords page keeps a history of presses, with a multi-character chord a
   await shot(page, 'chords-pressed');
   await page.getByRole('button', { name: 'Clear' }).click();
   await expect(rows).toHaveCount(0);
+});
+
+test('an unedited built-in layout saved by an older version is rebuilt on opening', async ({ page }) => {
+  // Short thumbs saved by 0.3.6 had digits on 2L. Opening the Tuner rebuilds it with this version's.
+  await page.goto('./#/tuner');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('tweedledum.profile.v1') ?? '{}').config?.name)).toBe('Twiddler default');
+  await page.addInitScript(() => {
+    const p = JSON.parse(localStorage.getItem('tweedledum.profile.v1')!);
+    if (p.config?.name !== 'Twiddler default') return;
+    // Keep the default's bytes but call it Short thumbs: a stale, unedited copy.
+    p.config.name = 'Short thumbs';
+    p.config.edited = false;
+    p.layout = { name: 'Short thumbs', entries: [['ROOO', 'a']], keys: [] };
+    localStorage.setItem('tweedledum.profile.v1', JSON.stringify(p));
+  });
+  await page.reload();
+  await expect(page.getByText(/Short thumbs changed in this version/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Download 1\.cfg Short thumbs, 128 chords/ })).toBeVisible();
+  await page.goto('./#/chords');
+  await expect(page.getByText('Waiting for a key.')).toBeVisible();
+  await page.keyboard.press('1');
+  await expect(page.locator('.explore')).toContainText('BL00');
+  await expect(page.getByText('B is a barre')).toBeVisible();
+  await shot(page, 'chords-barre');
 });
