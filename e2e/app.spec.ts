@@ -287,7 +287,7 @@ test('the SmallHands preset loads for practice and opens in the editor', async (
   await expect(page.getByText(/Switched to SmallHands: 118 chords/)).toBeVisible();
   await shot(page, 'preset');
   await page.getByPlaceholder('Search by buttons or action').fill('about');
-  await expect(page.locator('.list')).toContainText('1R 2M 3M 4M');
+  await expect(page.locator('.list')).toContainText('1L 2L 3L 4R');
   const dl = page.waitForEvent('download');
   await page.getByRole('radiogroup', { name: 'Slot on the Twiddler' }).getByText('2').click();
   await page.getByRole('button', { name: /Download/ }).click();

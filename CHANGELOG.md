@@ -1,5 +1,10 @@
 # Version history
 
+## 0.3.12
+
+- SmallHands word chords come in pairs. The index, middle and ring fingers stay in the L and M columns and make the shape; the little finger on 4M types the first word and on 4R the second: for/from on 1M 2L 3L, this/that on 1M 2L 3M, with/will on 1L 2M 3L, you/your on 1L 2M 3M, is/are on 1L 2L 3M, on/not on 1M 2M 3L, have/about on 1L 2L 3L.
+- The old word chords on 1R are gone. Applying the profile to a config that still has them moves them. Open the Tuner and download the config again.
+
 ## 0.3.11
 
 - SmallHands swaps T3 and T4: T3 holds Shift, so capitals are T3 with the letter chord, and T4 holds Control. Shift+Tab moves to T3 1M 2M 4M. Open the Tuner and download the config again.

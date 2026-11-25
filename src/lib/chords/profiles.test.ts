@@ -26,7 +26,9 @@ describe('the SmallHands profile', () => {
     expect(chordsFor(cfg, '0')).toEqual(['1L 1M 1R 2L 3L']);
     expect(chordsFor(cfg, '[')).toEqual(['1R 3R 4L']);
     expect(chordsFor(cfg, '~')).toEqual(['1M 3R 4L']);
-    expect(chordsFor(cfg, 'for ')).toEqual(['1R 2R 3R 4M']);
+    expect(chordsFor(cfg, 'for ')).toEqual(['1M 2L 3L 4M']);
+    expect(chordsFor(cfg, 'from ')).toEqual(['1M 2L 3L 4R']);
+    expect(chordsFor(cfg, 'about ')).toEqual(['1L 2L 3L 4R']);
     for (const w of COMMON_WORDS) expect(chordsFor(cfg, w), w).toHaveLength(1);
     expect(report.lost).toEqual([]);
     expect(report.farOnly).toEqual([]);
@@ -67,6 +69,17 @@ describe('the SmallHands profile', () => {
     expect(km.thumbName('C')).toBe('SHIFT');
     // The default layout keeps SHIFT on T4.
     expect(formatChord(new Keymap(DEFAULT_LAYOUT).chordFor('A')!, 't4')).toBe('T4 F1R');
+  });
+
+  it('moves word chords from their old 1R spots to the pairs', async () => {
+    const { textChord, BUTTON_BIT } = await import('./v7');
+    // SmallHands before 0.3.12 had "you " on 1R 2R 3L 4M, which people scored hardest to press.
+    const start = configFromLayout(DEFAULT_LAYOUT);
+    const old = (1 << BUTTON_BIT['1R']) | (1 << BUTTON_BIT['2R']) | (1 << BUTTON_BIT['3L']) | (1 << BUTTON_BIT['4M']);
+    start.chords.push(textChord(old, 'you ')!);
+    const { cfg, report } = applyChanges(start, ALL);
+    expect(chordsFor(cfg, 'you ')).toEqual(['1L 2M 3M 4M']);
+    expect(report.removed).toContain('1R 2R 3L 4M = "you "');
   });
 
   it('keeps every chord on its own buttons', () => {

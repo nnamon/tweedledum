@@ -71,19 +71,24 @@ export const SYMBOLS: [string, Button[]][] = [
 ];
 
 /**
- * Whole words worth a chord, by the share of typing they save in English web text (Peter Norvig's
- * word counts from Google's web corpus, the 20,000 most common words), after the factory word chords.
+ * Word chords in pairs. The top three fingers stay in the L and M columns; the little finger on 4M
+ * types the first word of a pair and on 4R the second. The words are the 14 that save the most
+ * typing in English web text (Peter Norvig's counts of Google's web corpus), after the factory word
+ * chords; the shapes are the ones scored easiest on a real Twiddler, the common pairs on the best.
  */
-export const COMMON_WORDS = ['for ', 'that ', 'this ', 'with ', 'is ', 'from ', 'you ', 'your ', 'not ', 'on ', 'are ', 'have ', 'about ', 'will '];
+export const WORD_PAIRS: [top: Button[], first: string, second: string][] = [
+  [['1M', '2L', '3L'], 'for ', 'from '],
+  [['1M', '2L', '3M'], 'this ', 'that '],
+  [['1L', '2M', '3L'], 'with ', 'will '],
+  [['1L', '2M', '3M'], 'you ', 'your '],
+  [['1L', '2L', '3M'], 'is ', 'are '],
+  [['1M', '2M', '3L'], 'on ', 'not '],
+  [['1L', '2L', '3L'], 'have ', 'about '],
+];
 
-/** Four-finger chords for words: the given row 1 button, then row 2 R or M, then any of rows 3 and 4. */
-function wordSpots(first: Button): number[] {
-  const out: number[] = [];
-  for (const two of ['R', 'M'] as const) for (const three of ['R', 'M', 'L'] as const) for (const four of ['R', 'M', 'L'] as const) {
-    out.push(bitsOf(first, `2${two}`, `3${three}`, `4${four}`));
-  }
-  return out;
-}
+export const WORDS: [string, Button[]][] = WORD_PAIRS.flatMap(([top, a, b]): [string, Button[]][] => [[a, [...top, '4M']], [b, [...top, '4R']]]);
+
+export const COMMON_WORDS = WORDS.map(([w]) => w);
 
 export const CHANGES: Record<ChangeId, Change> = {
   system: {
@@ -108,7 +113,7 @@ export const CHANGES: Record<ChangeId, Change> = {
   },
   words: {
     id: 'words', title: 'Common word chords',
-    detail: COMMON_WORDS.map((w) => w.trim()).join(', '),
+    detail: WORD_PAIRS.map(([, a, b]) => `${a.trim()}/${b.trim()}`).join(', '),
   },
 };
 
@@ -118,7 +123,7 @@ export const PROFILES: Profile[] = [
     title: 'SmallHands',
     detail:
       "For hands that can't reach T1 and T2. Digit and symbol chords that use T1, T2 or T3 move to the fingers. " +
-      "The word chords start with 1R and row 2, and each types its word and a space. They are the words that save the most typing in Peter Norvig's counts of English web text. " +
+      'Word chords come in pairs: the index, middle and ring fingers in the L and M columns make the shape, and the little finger on 4M types the first word, on 4R the second. Each types its word and a space. ' +
       'Applying it changes what you practise on too, so Learn chords picks up the new ones.',
     changes: [CHANGES.system, CHANGES.nav, CHANGES.digits, CHANGES.symbols, CHANGES.thumbs, CHANGES.words],
   },
@@ -168,7 +173,7 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
   const reserved = new Set<number>();
   if (want.has('digits')) DIGITS.forEach(([, b]) => reserved.add(bitsOf(...b)));
   if (want.has('symbols')) SYMBOLS.forEach(([, b]) => reserved.add(bitsOf(...b)));
-  if (want.has('words')) wordSpots('1R').forEach((b) => reserved.add(b));
+  if (want.has('words')) WORDS.forEach(([, b]) => reserved.add(bitsOf(...b)));
   if (want.has('thumbs')) OFF_SHIFT.forEach(([, b]) => reserved.add(bitsOf(...b)));
   const displaced: V7Chord[] = [];
 
@@ -223,19 +228,21 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
   if (want.has('digits')) placeChars(DIGITS);
   if (want.has('symbols')) placeChars(SYMBOLS);
 
-  const placeWords = (words: string[], spots: number[]) => {
-    const have = new Set(chords.map((c) => textOf(c)));
-    const free = spots.filter((b) => !at(b));
-    for (const w of words) {
-      if (have.has(w)) continue;
-      const bits = free.shift();
-      if (bits === undefined) break;
-      const next = textChord(bits, w)!;
-      chords.push(next);
+  if (want.has('words')) {
+    for (const [w, buttons] of WORDS) {
+      const next = textChord(bitsOf(...buttons), w)!;
+      if (at(next.bits) && label(at(next.bits)!) === label(next)) continue;
+      if (!put(next)) continue;
       report.placed.push(describe(next));
     }
-  };
-  if (want.has('words')) placeWords(COMMON_WORDS, wordSpots('1R'));
+    // The same words anywhere else, such as on the 1R chords before 0.3.12, come off.
+    for (const [w, buttons] of WORDS) {
+      for (const c of chords.filter((c) => textOf(c) === w && c.bits !== bitsOf(...buttons))) {
+        chords = chords.filter((x) => x !== c);
+        report.removed.push(describe(c));
+      }
+    }
+  }
 
   if (want.has('thumbs')) {
     // The config may already have Shift on T3, from an earlier run of this change.
