@@ -30,7 +30,7 @@ const T2 = bitsOf('T2');
 const T3 = bitsOf('T3');
 const T4 = bitsOf('T4');
 const THUMB_BITS = T1 | T2 | T3 | T4 | bitsOf('T0');
-/** Thumb buttons the SmallHands profile moves things off. T4 stays: it holds Shift. */
+/** Thumb buttons the SmallHands profile moves text off. T3 then holds Shift and T4 Control. */
 const FAR = T1 | T2 | T3;
 
 /** Keys that type nothing, where the factory layout has them: [buttons, HID modifier, HID key]. */
@@ -54,11 +54,12 @@ export const DIGITS: [string, Button[]][] = [
 ];
 
 /**
- * Where string chords on T4 go. The Twiddler holds Shift for as long as T4 is down, so a string
- * chord on T4 types every letter in capitals: "The " came out as "THE ". "The " goes on its "the "
- * chord with the little finger added; any other string on T4 moves to a free finger chord.
+ * Where string chords on the Shift thumb go. The Twiddler holds Shift for as long as that thumb is
+ * down, so a string chord on it types every letter in capitals: "The " came out as "THE ". "The "
+ * goes on its "the " chord with the little finger added; any other string moves to a free finger
+ * chord.
  */
-export const OFF_T4: [string, Button[]][] = [['The ', ['2R', '3R', '4M']]];
+export const OFF_SHIFT: [string, Button[]][] = [['The ', ['2R', '3R', '4M']]];
 
 /** Brackets and the symbols that need a far thumb on the factory layout, on 1R or 1M with rows 3 and 4. */
 export const SYMBOLS: [string, Button[]][] = [
@@ -102,8 +103,8 @@ export const CHANGES: Record<ChangeId, Change> = {
     detail: '[ ] { } < > | ^ ` ~',
   },
   thumbs: {
-    id: 'thumbs', title: 'T3 holds Control, T4 holds Shift',
-    detail: 'Removes the chords on T3 alone. "The " moves from T4 to 2R 3R 4M.',
+    id: 'thumbs', title: 'T3 holds Shift, T4 holds Control',
+    detail: 'Removes the chords on T3 alone and moves Shift+Tab to T3. "The " moves to 2R 3R 4M.',
   },
   words: {
     id: 'words', title: 'Common word chords',
@@ -151,7 +152,8 @@ const show = (t: string) => (t === ' ' ? 'Space' : t);
 
 /**
  * Applies the changes in a fixed order: device functions, digits, symbols, words, then the thumb
- * modifiers, which remove what is left on T3 alone and move string chords off T4.
+ * modifiers, which remove what is left on T3 alone, move string chords off the Shift thumb and swap
+ * T3 with T4.
  */
 export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config; report: Report } {
   const want = new Set(ids);
@@ -167,7 +169,7 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
   if (want.has('digits')) DIGITS.forEach(([, b]) => reserved.add(bitsOf(...b)));
   if (want.has('symbols')) SYMBOLS.forEach(([, b]) => reserved.add(bitsOf(...b)));
   if (want.has('words')) wordSpots('1R').forEach((b) => reserved.add(b));
-  if (want.has('thumbs')) OFF_T4.forEach(([, b]) => reserved.add(bitsOf(...b)));
+  if (want.has('thumbs')) OFF_SHIFT.forEach(([, b]) => reserved.add(bitsOf(...b)));
   const displaced: V7Chord[] = [];
 
   /** Puts the chord on its buttons, moving aside whatever was there unless it is a device function. */
@@ -193,9 +195,11 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
   }
 
   if (want.has('nav')) {
+    const onT3 = shiftOnT3({ header, chords });
     for (const [buttons, mod, key] of NAV_KEYS) {
       if (chords.some((c) => c.type === 2 && c.hi === mod && c.key === key)) continue;
-      const next = keyChord(bitsOf(...buttons), mod, key);
+      // Shift+Tab goes on whichever thumb holds Shift.
+      const next = keyChord(bitsOf(...buttons.map((b) => (b === 'T4' && onT3 ? 'T3' : b))), mod, key);
       if (at(next.bits)) continue;
       chords.push(next);
       report.placed.push(describe(next));
@@ -234,13 +238,17 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
   if (want.has('words')) placeWords(COMMON_WORDS, wordSpots('1R'));
 
   if (want.has('thumbs')) {
-    for (const c of chords.filter((c) => c.type !== 1 && (c.bits & THUMB_BITS) === T3)) {
+    // The config may already have Shift on T3, from an earlier run of this change.
+    const swapped = shiftOnT3({ header, chords });
+    const ctrl = swapped ? T4 : T3;
+    const shift = swapped ? T3 : T4;
+    for (const c of chords.filter((c) => c.type !== 1 && (c.bits & THUMB_BITS) === ctrl)) {
       chords = chords.filter((x) => x !== c);
       report.removed.push(describe(c));
     }
-    for (const c of chords.filter((c) => c.type === 7 && (c.bits & T4) !== 0)) {
+    for (const c of chords.filter((c) => c.type === 7 && (c.bits & shift) !== 0)) {
       chords = chords.filter((x) => x !== c);
-      const spot = OFF_T4.find(([t]) => t === textOf(c));
+      const spot = OFF_SHIFT.find(([t]) => t === textOf(c));
       const bits = spot ? bitsOf(...spot[1]) : 0;
       if (!spot || at(bits)) {
         displaced.push(c);
@@ -249,9 +257,19 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
       chords.push({ ...c, bits });
       report.moved.push(`${actionLabel(c)}: ${chordLabel(c.bits)} to ${chordLabel(bits)}`);
     }
+    // What is left on T4 needs Shift (Shift+Tab), so it follows Shift to T3. Swapping the two
+    // bits on every chord can't put two chords on the same buttons.
+    if (!swapped) {
+      chords = chords.map((c) => {
+        if (c.type === 1 || ((c.bits & (T3 | T4)) === 0)) return c;
+        const bits = ((c.bits & ~(T3 | T4)) | ((c.bits & T3) ? T4 : 0) | ((c.bits & T4) ? T3 : 0)) >>> 0;
+        report.moved.push(`${actionLabel(c)}: ${chordLabel(c.bits)} to ${chordLabel(bits)}`);
+        return { ...c, bits };
+      });
+    }
     const s = readSettings({ header, chords });
-    s.thumbs[2] = 1;
-    s.thumbs[3] = 2;
+    s.thumbs[2] = 2;
+    s.thumbs[3] = 1;
     header = writeSettings({ header, chords }, s).header;
   }
 
@@ -277,6 +295,12 @@ export function applyChanges(start: V7Config, ids: ChangeId[]): { cfg: V7Config;
   report.lost = [...before.keys()].filter((t) => !after.has(t)).map(show);
   report.farOnly = [...after.entries()].filter(([, list]) => list.every((b) => (b & (T1 | T2)) !== 0)).map(([t]) => show(t));
   return { cfg, report };
+}
+
+/** Whether T3 holds Shift and T4 Control, as this profile sets them. */
+function shiftOnT3(cfg: V7Config): boolean {
+  const t = readSettings(cfg).thumbs;
+  return t[2] === 2 && t[3] === 1;
 }
 
 /** What a chord does, for comparing two chords. */

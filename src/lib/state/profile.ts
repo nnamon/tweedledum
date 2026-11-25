@@ -115,6 +115,8 @@ export interface SavedLayout {
   entries: [string, string][];
   /** [chord, keypad label] for keys that type no text. */
   keys?: [string, string][];
+  /** What thumb buttons hold where it differs from their names, as { C: 'SHIFT' }. */
+  holds?: Record<string, string>;
 }
 
 /** Options last used on each exercise screen. */
@@ -269,6 +271,10 @@ export function normaliseProfile(raw: unknown): Profile {
       entries: (raw.layout.entries as unknown[]).filter(isPair),
       keys: Array.isArray(raw.layout.keys) ? (raw.layout.keys as unknown[]).filter(isPair) : [],
     };
+    if (isObj(raw.layout.holds)) {
+      const holds = Object.fromEntries(Object.entries(raw.layout.holds).filter(([t, v]) => ['N', 'A', 'C', 'S'].includes(t) && typeof v === 'string')) as Record<string, string>;
+      if (Object.keys(holds).length) p.layout.holds = holds;
+    }
   }
   // SmallHands was called Short thumbs until 0.3.10. Renaming it keeps it ticked in the Tuner.
   if (p.config?.name === 'Short thumbs') p.config.name = 'SmallHands';

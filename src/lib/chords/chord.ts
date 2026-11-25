@@ -132,9 +132,9 @@ export function chordSize(c: Chord): number {
 }
 
 /** A chord read aloud in words, for screen readers: "NUM, row 1 right, row 2 middle". */
-export function chordWords(c: Chord): string {
+export function chordWords(c: Chord, thumbNames: Record<Thumb, string> = THUMB_NAMES): string {
   const names: Record<Col, string> = { L: 'left', M: 'middle', R: 'right' };
-  const parts = c.thumbs.map((t) => THUMB_NAMES[t]);
+  const parts = c.thumbs.map((t) => thumbNames[t]);
   c.rows.forEach((cell, i) => {
     if (cell === 'B') parts.push(`row ${i + 1} all three`);
     else if (cell !== 'O') parts.push(`row ${i + 1} ${names[cell]}`);

@@ -32,7 +32,8 @@ describe('the SmallHands profile', () => {
     expect(report.farOnly).toEqual([]);
     // Nothing that types text is left on T1, T2 or T3 alone.
     expect(cfg.chords.filter((c) => c.type !== 1 && textOf(c) !== null && (c.bits & (T1 | T2 | T3)) !== 0).map((c) => chordLabel(c.bits))).toEqual([]);
-    expect(readSettings(cfg).thumbs.slice(2)).toEqual([1, 2]);
+    // T3 holds Shift and T4 Control.
+    expect(readSettings(cfg).thumbs.slice(2)).toEqual([2, 1]);
     // The result is a config the Tuner reads: it survives a write and a read.
     expect(writeV7(parseV7(writeV7(cfg)))).toEqual(writeV7(cfg));
   });
@@ -44,6 +45,28 @@ describe('the SmallHands profile', () => {
     expect(chordsFor(cfg, 'the ')).toEqual(['2R 3R']);
     expect(report.moved).toContain('"The ": T4 2R 3R to 2R 3R 4M');
     expect(cfg.chords.filter((c) => c.type === 7 && (c.bits & T4) !== 0)).toEqual([]);
+  });
+
+  it('swaps T3 and T4, so what needs Shift follows it to T3', async () => {
+    const { actionLabel } = await import('./v7');
+    const { cfg } = applyChanges(configFromLayout(DEFAULT_LAYOUT), ALL);
+    const labels = cfg.chords.map((c) => `${chordLabel(c.bits)} = ${actionLabel(c)}`);
+    expect(labels).toContain('T3 1M 2M 4M = Shift+Tab');
+    expect(cfg.chords.filter((c) => c.type !== 1 && (c.bits & T4) !== 0).map((c) => chordLabel(c.bits))).toEqual([]);
+  });
+
+  it('teaches capitals on T3 once T3 holds Shift', async () => {
+    const { importLayout } = await import('./import');
+    const { Keymap } = await import('./layout');
+    const { formatChord } = await import('./chord');
+    const { cfg } = applyChanges(configFromLayout(DEFAULT_LAYOUT), ALL);
+    const { layout } = importLayout(writeV7(cfg), 'x.cfg');
+    expect(layout.holds).toEqual({ C: 'SHIFT', S: 'CTRL' });
+    const km = new Keymap(layout);
+    expect(formatChord(km.chordFor('A')!, 't4')).toBe('T3 F1R');
+    expect(km.thumbName('C')).toBe('SHIFT');
+    // The default layout keeps SHIFT on T4.
+    expect(formatChord(new Keymap(DEFAULT_LAYOUT).chordFor('A')!, 't4')).toBe('T4 F1R');
   });
 
   it('keeps every chord on its own buttons', () => {
@@ -71,8 +94,8 @@ describe('the SmallHands profile', () => {
   it.skipIf(!existsSync(t3num))('moves a Tuner download with digits on T3 onto the fingers', () => {
     const { cfg, report } = applyChanges(parseV7(new Uint8Array(readFileSync(t3num))), ALL);
     expect(report.lost).toEqual([]);
-    // The barre digits land on free spots, so nothing has to move.
-    expect(report.moved).toEqual([]);
+    // The barre digits land on free spots, so nothing moves except chords following T3 and T4.
+    expect(report.moved.filter((m) => !/T[34].* to .*T[34]/.test(m))).toEqual([]);
     expect(chordsFor(cfg, '5')).toEqual(['1L 1M 1R 3M']);
   });
 });
@@ -87,7 +110,7 @@ describe('the SmallHands preset', () => {
     expect(labels).toContain('2L 3L 4L = End');
     expect(chordsFor(cfg, '9')).toEqual(['1L 1M 1R 4R']);
     for (const w of COMMON_WORDS) expect(chordsFor(cfg, w), w).toHaveLength(1);
-    expect(cfg.chords.filter((c) => c.type !== 1 && (c.bits & (T1 | T2 | T3)) !== 0)).toEqual([]);
+    expect(cfg.chords.filter((c) => c.type !== 1 && (c.bits & (T1 | T2)) !== 0)).toEqual([]);
     const bits = cfg.chords.map((c) => c.bits);
     expect(new Set(bits).size).toBe(bits.length);
   });

@@ -68,7 +68,7 @@ export function layout(): Layout {
     const chord = parseChord(c);
     return chord ? [{ chord, name }] : [];
   });
-  return { name: saved.name, entries, keys };
+  return { name: saved.name, entries, keys, holds: saved.holds as Layout['holds'] };
 }
 
 /** The keymap for the layout in use, rebuilt only when the layout changes. */

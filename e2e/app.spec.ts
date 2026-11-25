@@ -296,6 +296,10 @@ test('the SmallHands preset loads for practice and opens in the editor', async (
   await expect(page.getByText('Waiting for a key.')).toBeVisible();
   await page.keyboard.press('9');
   await expect(page.locator('.explore')).toContainText('B00R');
+  // T3 holds Shift in SmallHands, so capitals are taught on T3 and the keypad says so.
+  await expect(page.getByText('In this layout SHIFT is T3, written C in classic notation.')).toBeVisible();
+  await page.keyboard.press('A');
+  await expect(page.locator('.explore')).toContainText('C+R000');
 });
 
 test('the Chords page sorts multi-character chords and shows their spaces', async ({ page }) => {

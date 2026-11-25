@@ -1,6 +1,6 @@
 // A layout: what each chord types. The default is the layout the Tek Gear Typing Tutor teaches.
 
-import { type Chord, type Col, parseChord, chordText, withThumb, chordSize } from './chord';
+import { type Chord, type Col, type Thumb, THUMB_NAMES, parseChord, chordText, withThumb, chordSize } from './chord';
 
 export interface Entry {
   chord: Chord;
@@ -13,6 +13,11 @@ export interface Layout {
   entries: Entry[];
   /** Chords for keys that do not type text (Enter, Backspace...), with a short label for the keypad picture. */
   keys?: { chord: Chord; name: string }[];
+  /**
+   * What thumb buttons hold on the Twiddler where it differs from their names (NUM, ALT, CTRL,
+   * SHIFT). SmallHands puts SHIFT on the CTRL button (T3) and CTRL on the SHIFT button (T4).
+   */
+  holds?: Partial<Record<Thumb, string>>;
 }
 
 // The tutor's chord list (tutor.mytwiddler.com/tutor2, read on 21 November 2026), the entries
@@ -67,9 +72,13 @@ export class Keymap {
   private keyNames = new Map<string, string>();
   /** Multi-character outputs, longest first. */
   readonly multi: Entry[];
+  /** The thumb button that holds Shift, for capitals. */
+  readonly shift: Thumb;
 
   constructor(layout: Layout) {
     this.layout = layout;
+    const held = Object.entries(layout.holds ?? {}).find(([, v]) => v === 'SHIFT');
+    this.shift = held ? (held[0] as Thumb) : 'S';
     for (const e of layout.entries) {
       const prev = this.byOutput.get(e.output);
       // Where two chords type the same thing, the one with fewer buttons is taught.
@@ -82,8 +91,8 @@ export class Keymap {
   }
 
   /**
-   * The chord for one character. A capital letter with no chord of its own is SHIFT with the
-   * small letter's chord.
+   * The chord for one character. A capital letter with no chord of its own is the thumb that
+   * holds Shift with the small letter's chord.
    */
   chordFor(ch: string): Chord | null {
     const direct = this.byOutput.get(ch);
@@ -91,9 +100,14 @@ export class Keymap {
     const lower = ch.toLowerCase();
     if (lower !== ch) {
       const base = this.byOutput.get(lower);
-      if (base) return withThumb(base, 'S');
+      if (base) return withThumb(base, this.shift);
     }
     return null;
+  }
+
+  /** What a thumb button holds, as the keypad picture labels it: NUM, ALT, CTRL or SHIFT. */
+  thumbName(t: Thumb): string {
+    return this.layout.holds?.[t] ?? THUMB_NAMES[t];
   }
 
   /** The chord for a key that types nothing, by its keypad label (ENT, BS), or null. */

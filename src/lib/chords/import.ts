@@ -97,6 +97,7 @@ class Builder {
   entries: Entry[] = [];
   keys: { chord: Chord; name: string }[] = [];
   skipped = 0;
+  holds?: Partial<Record<Thumb, string>>;
   /** A chord that types no text: kept as a label when it is a known key. */
   key(chord: Chord | null, name: string | null) {
     this.skipped++;
@@ -201,6 +202,7 @@ export function importConfig(bytes: Uint8Array, name: string): ImportResult {
     // zero in factory files and a stamp in files downloaded from the Tuner.
     if (bytes.length >= 128 && bytes[4] === 7) {
       readV7(d, b);
+      b.holds = v7Holds(d);
       format = 'Twiddler 4 config (version 7)';
     } else if (bytes[0] === 4 || bytes[0] === 5) {
       readV4V5(d, b);
@@ -213,6 +215,18 @@ export function importConfig(bytes: Uint8Array, name: string): ImportResult {
     throw new LayoutError('This config file is damaged or cut short. Nothing was changed.');
   }
   return finish(b, name, format);
+}
+
+/** What the thumbs hold, from the four u32 modifier codes at 0x40, where it differs from their names. */
+function v7Holds(d: DataView): Partial<Record<Thumb, string>> | undefined {
+  const names: Record<number, string> = { 1: 'CTRL', 2: 'SHIFT', 3: 'ALT', 4: 'CMD' };
+  const usual: Record<Thumb, number> = { N: 0, A: 3, C: 1, S: 2 };
+  const out: Partial<Record<Thumb, string>> = {};
+  (['N', 'A', 'C', 'S'] as Thumb[]).forEach((t, i) => {
+    const code = d.getUint32(0x40 + 4 * i, true);
+    if (code !== usual[t] && names[code]) out[t] = names[code];
+  });
+  return Object.keys(out).length ? out : undefined;
 }
 
 // ---- Text formats ------------------------------------------------------------------------------
@@ -365,7 +379,9 @@ function finish(b: Builder, name: string, format: string): ImportResult {
     seen.add(c);
     return true;
   });
-  return { layout: { name: name.replace(/\.[a-z0-9]+$/i, '') || 'Imported layout', entries, keys }, skipped, format };
+  const layout: Layout = { name: name.replace(/\.[a-z0-9]+$/i, '') || 'Imported layout', entries, keys };
+  if (b.holds) layout.holds = b.holds;
+  return { layout, skipped, format };
 }
 
 /** Reads a layout file by its content. */

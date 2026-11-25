@@ -61,6 +61,11 @@
     picked = null;
   }
 
+  const capitals = $derived(
+    km.shift === 'S'
+      ? 'Capitals: hold SHIFT with the letter chord.'
+      : `Capitals: hold SHIFT with the letter chord. In this layout SHIFT is ${({ N: 'T1', A: 'T2', C: 'T3', S: 'T4' } as const)[km.shift]}, written ${km.shift} in classic notation.`,
+  );
   const hasBarre = $derived(km.layout.entries.some((e) => e.chord.rows.includes('B')));
 
   const groups = $derived.by(() => {
@@ -73,7 +78,7 @@
     const words = multi.filter((e) => isWord(e.output));
     const strings = multi.filter((e) => !isWord(e.output));
     return [
-      { head: 'Letters', items: letters, foot: 'Capitals: hold SHIFT with the letter chord.' },
+      { head: 'Letters', items: letters, foot: capitals },
       { head: 'Digits', items: digits, foot: '' },
       { head: 'Space and punctuation', items: other, foot: '' },
       { head: 'Words and word parts', items: words, foot: strings.length ? '' : 'One chord types the whole string, spaces included. ␣ marks a space.' },

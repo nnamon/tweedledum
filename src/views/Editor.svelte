@@ -56,6 +56,7 @@
       name: layoutName,
       entries: r.layout.entries.map((e) => [chordText(e.chord), e.output]),
       keys: (r.layout.keys ?? []).map((k) => [chordText(k.chord), k.name]),
+      ...(r.layout.holds ? { holds: r.layout.holds as Record<string, string> } : {}),
     };
   }
 

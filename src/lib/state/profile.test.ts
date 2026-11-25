@@ -107,6 +107,11 @@ describe('transfer', () => {
     expect((await importText(JSON.stringify(edited))).config?.edited).toBe(true);
   });
 
+  it('keeps what the thumbs hold in a saved layout, and drops anything else', async () => {
+    const saved = { ...emptyProfile(5), layout: { name: 'SmallHands', entries: [], keys: [], holds: { C: 'SHIFT', S: 'CTRL', X: 'ALT', A: 3 } } };
+    expect((await importText(JSON.stringify(saved))).layout?.holds).toEqual({ C: 'SHIFT', S: 'CTRL' });
+  });
+
   it('renames Short thumbs, saved before 0.3.10, to SmallHands', async () => {
     const old = { ...emptyProfile(5), config: { name: 'Short thumbs', data: 'AAAA' }, layout: { name: 'Short thumbs', entries: [], keys: [] } };
     const p = await importText(JSON.stringify(old));

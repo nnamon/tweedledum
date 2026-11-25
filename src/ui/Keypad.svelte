@@ -9,7 +9,7 @@
   // buttons from behind. Worn on the left hand, the device sits mirrored against your fingers,
   // so `hand: 'left'` mirrors the picture left to right; which button types what is unchanged.
   import type { Chord, Col, Thumb } from '../lib/chords/chord';
-  import { chordWords, THUMB_NAMES } from '../lib/chords/chord';
+  import { chordWords } from '../lib/chords/chord';
   import type { Keymap } from '../lib/chords/layout';
 
   let {
@@ -41,7 +41,7 @@
   const mirrored = $derived((view === 'back') !== (hand === 'left'));
   const cols = $derived<Col[]>(mirrored ? ['L', 'M', 'R'] : ['R', 'M', 'L']);
 
-  // Thumb buttons, left to right in the front view: NUM, ALT, CTRL, SHIFT (T1 to T4).
+  // Thumb buttons, left to right in the front view: T1 to T4, labelled with what they hold.
   const THUMB_POS: { t: Thumb; x: number; y: number }[] = [
     { t: 'N', x: 54, y: 42 },
     { t: 'A', x: 82, y: 80 },
@@ -62,7 +62,8 @@
     return s.trim().length ? s.trim().slice(0, 4) : s;
   }
 
-  const label = $derived(chord ? `Chord: ${chordWords(chord)}` : 'Twiddler keypad');
+  const names = $derived({ N: km.thumbName('N'), A: km.thumbName('A'), C: km.thumbName('C'), S: km.thumbName('S') });
+  const label = $derived(chord ? `Chord: ${chordWords(chord, names)}` : 'Twiddler keypad');
 </script>
 
 <figure class="pad">
@@ -81,7 +82,7 @@
       {@const ring = !!multi?.thumbs.includes(p.t)}
       <g class="thumb" class:on class:ring>
         <circle cx={p.x} cy={p.y} r="15" />
-        <text x={p.x} y={p.y + (notation === 't4' ? -1 : 3)} text-anchor="middle" class="t-label" font-size="7.5">{THUMB_NAMES[p.t]}</text>
+        <text x={p.x} y={p.y + (notation === 't4' ? -1 : 3)} text-anchor="middle" class="t-label" font-size="7.5">{names[p.t]}</text>
         {#if notation === 't4'}
           <text x={p.x} y={p.y + 8} text-anchor="middle" class="t-num" font-size="7">{T4_NUM[p.t]}</text>
         {/if}

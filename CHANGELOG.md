@@ -1,5 +1,10 @@
 # Version history
 
+## 0.3.11
+
+- SmallHands swaps T3 and T4: T3 holds Shift, so capitals are T3 with the letter chord, and T4 holds Control. Shift+Tab moves to T3 1M 2M 4M. Open the Tuner and download the config again.
+- Lessons, drills and the Chords page teach capitals on whichever thumb holds Shift in the config, and the keypad picture labels the thumbs with what they hold.
+
 ## 0.3.10
 
 - Short thumbs is now called SmallHands. Progress saved under the old name keeps it ticked.
