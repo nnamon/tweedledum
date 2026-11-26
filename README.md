@@ -9,6 +9,12 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/nnamon/tweedledum/releases/latest"><img src="https://img.shields.io/github/v/release/nnamon/tweedledum?label=version" alt="Latest version"></a>
+  <a href="https://github.com/nnamon/tweedledum/actions/workflows/pages.yml"><img src="https://github.com/nnamon/tweedledum/actions/workflows/pages.yml/badge.svg" alt="Test and deploy status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/nnamon/tweedledum" alt="MIT licence"></a>
+</p>
+
+<p align="center">
   <a href="https://nnamon.github.io/tweedledum/"><b>Open the app</b></a>
   &nbsp;·&nbsp;
   <a href="CHANGELOG.md">Changelog</a>
